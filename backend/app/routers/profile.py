@@ -111,3 +111,15 @@ def update_user_profile(
         pass
 
     return UserProfileResponse.model_validate(profile)
+
+@router.delete("/account")
+def delete_user_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently delete the authenticated user's account and all associated personal data.
+    """
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Your account and all associated personal records have been permanently deleted."}

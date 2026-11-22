@@ -29,9 +29,9 @@ class Settings(BaseSettings):
     # Job Providers
     ENABLE_REMOTIVE: bool = True
     ENABLE_ARBEITNOW: bool = True
-    ADZUNA_APP_ID: str = ""
-    ADZUNA_APP_KEY: str = ""
-    ADZUNA_COUNTRY: str = "us"
+    ADZUNA_APP_ID: str = os.getenv("ADZUNA_APP_ID", "")
+    ADZUNA_APP_KEY: str = os.getenv("ADZUNA_APP_KEY", "")
+    ADZUNA_COUNTRY: str = os.getenv("ADZUNA_COUNTRY", "in")
 
     # Push Notification Service
     FCM_SERVER_KEY: str = ""

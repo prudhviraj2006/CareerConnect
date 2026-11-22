@@ -53,10 +53,22 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun loginStandalone() {
+    fun loginWithGoogle(email: String, fullName: String? = null, idToken: String? = null) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            val result = authRepository.loginStandalone()
+            val result = authRepository.loginWithGoogle(email, fullName, idToken)
+            result.onSuccess {
+                _uiState.value = AuthUiState.Success(it)
+            }.onFailure {
+                _uiState.value = AuthUiState.Error(it.message ?: "Google authentication failed.")
+            }
+        }
+    }
+
+    fun loginStandalone(userEmail: String? = null, userName: String? = null) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            val result = authRepository.loginStandalone(userEmail, userName)
             result.onSuccess {
                 _uiState.value = AuthUiState.Success(it)
             }.onFailure {

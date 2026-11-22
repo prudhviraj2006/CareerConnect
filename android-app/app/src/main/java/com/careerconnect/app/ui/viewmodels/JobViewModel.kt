@@ -13,9 +13,14 @@ import kotlinx.coroutines.launch
 
 data class JobFilterState(
     val location: String = "",
+    val state: String = "",
+    val city: String = "",
     val experienceLevel: String = "",
     val employmentType: String = "",
     val isRemoteOnly: Boolean = false,
+    val isFresherOnly: Boolean = false,
+    val isInternshipOnly: Boolean = false,
+    val includeInternational: Boolean = false,
     val sortBy: String = "date" // date, relevance
 )
 

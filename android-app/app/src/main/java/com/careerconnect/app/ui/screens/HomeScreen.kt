@@ -117,7 +117,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = "Hello, ${profile?.fullName ?: "Candidate"}",
+                            text = "Hello, ${profile?.fullName ?: "Job Seeker"}",
                             style = MaterialTheme.typography.headlineMedium,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
@@ -138,19 +138,20 @@ fun HomeScreen(
                             Button(
                                 onClick = onNavigateToResumeUpload,
                                 shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue, contentColor = Color.White)
                             ) {
                                 Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Upload Resume", fontSize = 13.sp)
+                                Text("Upload Resume", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
 
                             OutlinedButton(
                                 onClick = onNavigateToProfile,
                                 shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.8f))
                             ) {
-                                Text("Edit Profile", fontSize = 13.sp)
+                                Text("Edit Profile", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -180,7 +181,7 @@ fun HomeScreen(
                     StatCard(
                         title = "Applications",
                         value = "Track",
-                        icon = Icons.Default.Assignment,
+                        icon = Icons.Outlined.Assignment,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToApplications
                     )

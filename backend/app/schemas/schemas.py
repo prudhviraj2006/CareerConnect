@@ -13,6 +13,12 @@ class UserLoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = "Google User"
+    id_token: Optional[str] = None
+    photo_url: Optional[str] = None
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

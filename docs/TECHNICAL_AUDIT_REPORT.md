@@ -1,0 +1,39 @@
+# CareerConnect – Technical Audit & Bug Report
+**Date:** November 22, 2026  
+**Auditor:** Senior Android Engineer & Cloud Architect  
+**Project:** CareerConnect – An Intelligent Skill-Based Job Matching Application
+
+---
+
+## 1. Executive Summary
+This technical audit inspects the existing Android source code, Jetpack Compose screens, data models, repository layer, background jobs, database schema, and backend APIs. The app has a solid MVVM + Jetpack Compose foundation and cloud-deployed FastAPI backend on Render. However, testing on physical Android devices revealed critical UI contrast issues, missing field validation, hardcoded demo identities, keyboard overlap bugs, and non-India-centric placeholders.
+
+---
+
+## 2. Area-by-Area Inspection & Required Actions
+
+| Area | Observed Issues in Code / Physical Device | Root Cause Identified | Required Engineering Action |
+|---|---|---|---|
+| **Login** | 1. Login button text rendered nearly invisible on some devices.<br>2. Text field placeholders have low contrast.<br>3. Standalone mode hardcoded to fake user.<br>4. Missing Google Sign-In button. | Material 3 `Button` with `containerColor = NavyPrimary` did not explicitly set `contentColor = Color.White`. Default disabled button rendered text almost transparent. Standalone login returned hardcoded "Alex Chen". | 1. Set explicit high-contrast colors (`contentColor = Color.White`).<br>2. Add clear input validation.<br>3. Add Google Sign-In with real authentication configuration.<br>4. Display meaningful error states with retry. |
+| **Onboarding** | 1. Bottom action button appears blank.<br>2. Excessive vertical empty space.<br>3. Inconsistent spacing on various screen sizes.<br>4. Skip button alignment. | `Text` inside the bottom action button in `OnboardingScreen.kt` omitted `color = Color.White` when wrapped in a custom colored container. Onboarding did not cleanly check persistent DataStore completion on startup. | 1. Ensure action button text ("Continue" / "Get Started") is explicitly white with 16sp bold text.<br>2. Add responsive layout with weights and official horizontal brand logo.<br>3. Persist onboarding completion in `UserPreferencesDataStore`. |
+| **Profile Setup** | 1. Text field placeholders and labels have poor contrast.<br>2. Soft keyboard overlaps and hides form fields and Save button.<br>3. Graduation year text field concatenates or accepts invalid numbers.<br>4. Save Profile button appears blank.<br>5. Skill chips cannot be removed. | 1. `Button` lacked explicit `contentColor = Color.White`.<br>2. Form lacked `Modifier.imePadding()`.<br>3. `gradYearText` lacked 4-digit numeric validation.<br>4. `InputChip` trailing icon had empty `onClick = {}`.<br>5. Lacked India-specific fields (State, City, Fresher/Experienced toggle, +91 phone). | 1. Add `imePadding()` and smooth scrolling.<br>2. Fix `InputChip` removal callback.<br>3. Add graduation year validation (e.g. 1970–2035).<br>4. Add Indian States & Cities dropdown/search, Fresher/Experienced switch, and +91 phone format.<br>5. Explicitly style Save button with visible label and progress indicator. |
+| **Candidate Profile** | 1. Displays fabricated data: "Alex Chen", "candidate@careerconnect.cloud", "+1-555-0199", "Class of 2024".<br>2. Shows fake "Verified Candidate Profile" badge.<br>3. Shows "$85,000 - $105,000" instead of INR.<br>4. Profile completion % missing. | `ProfileRepository.kt` initialized `standaloneProfile` with hardcoded mock data for Alex Chen. When API returned an empty or offline response, the mock data was served to the UI. | 1. Completely eliminate `Alex Chen` and all fabricated records from `ProfileRepository.kt`, `AuthRepository.kt`, and `ResumeRepository.kt`.<br>2. Fetch and display only real authenticated user data.<br>3. If data is unpopulated, show "Not added yet".<br>4. Compute and display true profile completion percentage.<br>5. Verified badge only shown when email/profile is genuinely verified. |
+| **Navigation** | 1. Bottom navigation bar icons and labels contrast check.<br>2. Back stack preservation across 5 tabs (Home, Search, Saved, Alerts, Profile). | `NavGraph.kt` handles 22 routes, but back-press on child screens needs consistent pop-back behavior and bottom bar visibility needs strict filtering. | 1. Verify all 5 bottom destinations.<br>2. Ensure back navigation returns cleanly without duplicate stacks.<br>3. Maintain UI state using `rememberSaveable` across configuration changes. |
+| **Backend & Cloud** | 1. `buildConfigField("BASE_URL")` previously defaulted to `10.0.2.2:8000`.<br>2. Render deployment had psycopg compatibility fix applied.<br>3. Database requires schema support for India-specific location and fresher filters. | Emulator loopback address was default. Database had generic string location. | 1. Point all builds to live HTTPS backend: `https://careerconnect-backend-cpki.onrender.com/`.<br>2. Ensure user-specific JWT authorization on all endpoints.<br>3. Enforce privacy: users can only view/edit their own profile and resumes. |
+| **Job Integration** | 1. Remotive & Arbeitnow APIs return predominantly European/US/Remote jobs.<br>2. Job search filters had "Berlin, New York" as placeholders.<br>3. No Indian cities or states filter.<br>4. Currency was in USD ($) or Euros (€). | Lack of India-first location catalog, Indian salary parser (LPA / INR ₹), and India-focused job source queries. | 1. Implement India-first location catalog with all 28 states, 8 union territories, and major tech/industrial hubs.<br>2. Add Adzuna India integration (`country=in`) and Indian remote/tech feeds.<br>3. Display salaries in Indian Rupees (₹ LPA or ₹/month), only when source supplies it.<br>4. Tag jobs as Fresher-friendly or Internship.<br>5. Disallow fake filler jobs; show genuine empty states. |
+| **Branding** | 1. Generic briefcase or work vector icons were used in some screens.<br>2. Missing adaptive launcher icons for OEM launchers (Samsung, Xiaomi, Vivo). | Missing legacy mipmaps and raw square icon assets. | 1. Generated full mipmap suite (`mdpi` to `xxxhdpi`) from official square icon.<br>2. Integrated horizontal brand logo ("Find • Match • Grow") in Splash, Login, Register, Onboarding, and Settings.<br>3. Applied official color palette (#071A52, #0866F5, #16C7F2, #FFFFFF, #F5F7FC, #111827, #64748B). |
+| **Database** | 1. User records and resumes must be isolated per user ID.<br>2. Demo/sample jobs should not contaminate production tables. | SQLite Room local cache had sample jobs with static IDs 101-105. | 1. Ensure Room and Cloud PostgreSQL only persist genuine user records.<br>2. Clear any static demo records from production database scripts.<br>3. Ensure cascade deletion on user account delete. |
+
+---
+
+## 3. Milestones Execution Strategy
+- **Milestone 1:** Audit & Bug Report (Completed above).
+- **Milestone 2:** Fix Login Screen (Google Sign-In + Email, high-contrast buttons, validation), Onboarding Screen (visible action buttons, responsive spacing), and Bottom Navigation.
+- **Milestone 3:** Fix Profile Setup (keyboard insets, graduation year validation, skill removal chips, India state/city fields, Fresher/Experienced toggle) and Candidate Profile (eliminate Alex Chen, show true data, profile completion %).
+- **Milestone 4:** Brand System Verification across all screens.
+- **Milestone 5:** India-First Location, Currency (₹ INR / LPA), and Filters (State, City, Fresher, Internship).
+- **Milestone 6:** Removal of all Demo Data from frontend and backend.
+- **Milestone 7:** Real Indian Job Data Integration (Adzuna India, Indian tech hubs, legitimate job feeds).
+- **Milestone 8:** Skill Matching & Recommendations Verification (60/20/10/10 formula).
+- **Milestone 9:** Cloud Backend & Security Hardening (JWT, user privacy, account deletion).
+- **Milestone 10:** Comprehensive Verification, Gradle Test Suite, and Debug APK Build.

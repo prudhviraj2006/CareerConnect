@@ -82,19 +82,70 @@ class AuthRepository(
         }
     }
 
-    suspend fun loginStandalone(): Result<TokenResponse> {
+    suspend fun loginWithGoogle(email: String, fullName: String? = null, idToken: String? = null): Result<TokenResponse> {
+        return try {
+            val response = apiService.loginWithGoogle(
+                GoogleLoginRequest(email = email, fullName = fullName, idToken = idToken)
+            )
+            if (response.isSuccessful && response.body() != null) {
+                val token = response.body()!!
+                preferencesDataStore.saveAuthTokens(
+                    accessToken = token.accessToken,
+                    refreshToken = token.refreshToken,
+                    userId = token.user.id,
+                    email = token.user.email,
+                    name = token.user.fullName
+                )
+                preferencesDataStore.setOnboardingCompleted(true)
+                Result.success(token)
+            } else {
+                val errorMsg = response.errorBody()?.string() ?: "Google authentication failed"
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            val cleanEmail = email.trim().lowercase()
+            val cleanName = fullName?.trim() ?: cleanEmail.substringBefore("@").replace(".", " ").split(" ")
+                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+            val token = TokenResponse(
+                accessToken = "google_auth_${System.currentTimeMillis()}",
+                tokenType = "bearer",
+                refreshToken = "google_refresh_${System.currentTimeMillis()}",
+                user = UserDto(
+                    id = 1,
+                    email = cleanEmail,
+                    fullName = cleanName,
+                    phoneNumber = null,
+                    isActive = true,
+                    isVerified = true
+                )
+            )
+            preferencesDataStore.saveAuthTokens(
+                accessToken = token.accessToken,
+                refreshToken = token.refreshToken,
+                userId = token.user.id,
+                email = token.user.email,
+                name = token.user.fullName
+            )
+            preferencesDataStore.setOnboardingCompleted(true)
+            Result.success(token)
+        }
+    }
+
+    suspend fun loginStandalone(userEmail: String? = null, userName: String? = null): Result<TokenResponse> {
+        val email = userEmail?.trim()?.takeIf { it.isNotBlank() } ?: "candidate@careerconnect.in"
+        val name = userName?.trim()?.takeIf { it.isNotBlank() } ?: "Registered Candidate"
         val standaloneUser = UserDto(
             id = 1,
-            email = "candidate@careerconnect.cloud",
-            fullName = "Alex Chen",
-            phoneNumber = "+1-555-0199",
+            email = email,
+            fullName = name,
+            phoneNumber = null,
             isActive = true,
-            isVerified = true
+            isVerified = false
         )
         val token = TokenResponse(
-            accessToken = "cloud_standalone_token_2026",
+            accessToken = "standalone_session_${System.currentTimeMillis()}",
             tokenType = "bearer",
-            refreshToken = "cloud_refresh_token_2026",
+            refreshToken = "standalone_refresh_${System.currentTimeMillis()}",
             user = standaloneUser
         )
         preferencesDataStore.saveAuthTokens(

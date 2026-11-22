@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.careerconnect.app.data.utils.IndiaLocations
 import com.careerconnect.app.ui.components.*
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.JobViewModel
@@ -94,11 +96,11 @@ fun JobDetailsScreen(
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary, contentColor = Color.White)
                     ) {
-                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Apply Now", fontWeight = FontWeight.SemiBold)
+                        Text("Apply Now", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -168,15 +170,13 @@ fun JobDetailsScreen(
                     j.experienceLevel?.let { MetadataChip(icon = Icons.Outlined.Person, text = it) }
                 }
 
-                if (j.salary != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Compensation: ${j.salary}",
-                        fontWeight = FontWeight.Bold,
-                        color = AccentCyan,
-                        fontSize = 15.sp
-                    )
-                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Compensation: ${IndiaLocations.formatIndianSalary(j.salary)}",
+                    fontWeight = FontWeight.Bold,
+                    color = AccentBlue,
+                    fontSize = 15.sp
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 

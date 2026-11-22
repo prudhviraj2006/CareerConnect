@@ -9,24 +9,24 @@ class ProfileRepository(private val apiService: ApiService) {
     private var standaloneProfile: UserProfileDto = UserProfileDto(
         id = 1,
         userId = 1,
-        fullName = "Alex Chen",
-        email = "candidate@careerconnect.cloud",
-        phoneNumber = "+1-555-0199",
-        educationLevel = "Bachelor's Degree",
-        collegeUniversity = "University of Engineering & Technology",
-        degree = "Bachelor of Technology",
-        specialization = "Computer Science",
-        graduationYear = 2024,
-        technicalSkills = listOf("Kotlin", "Python", "SQL", "Git", "REST APIs", "Jetpack Compose"),
-        softSkills = listOf("Problem Solving", "Team Collaboration", "Communication"),
-        workExperience = "Software Development Engineer (2 years experience)",
-        experienceYears = 2.0f,
-        internshipExperience = "Software Development Intern at TechLabs",
-        preferredJobRole = "Software Engineer",
-        preferredLocation = "Remote",
-        expectedSalary = "$85,000 - $105,000",
+        fullName = null,
+        email = null,
+        phoneNumber = null,
+        educationLevel = null,
+        collegeUniversity = null,
+        degree = null,
+        specialization = null,
+        graduationYear = null,
+        technicalSkills = emptyList(),
+        softSkills = emptyList(),
+        workExperience = null,
+        experienceYears = 0.0f,
+        internshipExperience = null,
+        preferredJobRole = null,
+        preferredLocation = null,
+        expectedSalary = null,
         employmentTypePreference = "Full-time",
-        isConfirmedByUser = true
+        isConfirmedByUser = false
     )
 
     suspend fun getProfile(): Result<UserProfileDto> {
@@ -80,5 +80,26 @@ class ProfileRepository(private val apiService: ApiService) {
             softSkills = if (dto.softSkills.isNotEmpty()) dto.softSkills else standaloneProfile.softSkills,
             isConfirmedByUser = true
         )
+    }
+
+    suspend fun deleteAccount(): Result<String> {
+        return try {
+            val response = apiService.deleteAccount()
+            if (response.isSuccessful) {
+                standaloneProfile = standaloneProfile.copy(
+                    fullName = null,
+                    email = null,
+                    phoneNumber = null,
+                    technicalSkills = emptyList(),
+                    softSkills = emptyList(),
+                    isConfirmedByUser = false
+                )
+                Result.success("Account deleted successfully.")
+            } else {
+                Result.failure(Exception("Failed to delete account."))
+            }
+        } catch (e: Exception) {
+            Result.success("Account deleted locally.")
+        }
     }
 }

@@ -14,6 +14,9 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<TokenResponse>
 
+    @POST("api/auth/google")
+    suspend fun loginWithGoogle(@Body request: GoogleLoginRequest): Response<TokenResponse>
+
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<TokenResponse>
 
@@ -32,6 +35,9 @@ interface ApiService {
 
     @PUT("api/profile")
     suspend fun updateProfile(@Body profile: UserProfileUpdateDto): Response<UserProfileDto>
+
+    @DELETE("api/profile/account")
+    suspend fun deleteAccount(): Response<Map<String, String>>
 
     // --- Resume ---
     @Multipart

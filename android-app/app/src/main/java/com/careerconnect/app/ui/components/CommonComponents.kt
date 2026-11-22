@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careerconnect.app.data.models.JobDto
+import com.careerconnect.app.data.utils.IndiaLocations
 import com.careerconnect.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -205,15 +206,13 @@ fun JobCard(
                 }
             }
 
-            if (job.salary != null) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = job.salary,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AccentCyan,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = IndiaLocations.formatIndianSalary(job.salary),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (job.salary != null) AccentBlue else TextSecondaryLight,
+                fontWeight = FontWeight.SemiBold
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

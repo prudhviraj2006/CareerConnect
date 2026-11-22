@@ -1,14 +1,17 @@
 package com.careerconnect.app.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Email
@@ -22,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careerconnect.app.R
@@ -39,6 +43,9 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+    var showGoogleDialog by remember { mutableStateOf(false) }
+    var googleEmailInput by remember { mutableStateOf("") }
 
     val uiState by authViewModel.uiState.collectAsState()
 
@@ -54,94 +61,123 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Official CareerConnect Horizontal Logo
+            // Official CareerConnect Horizontal Brand Logo
             Image(
                 painter = painterResource(id = R.drawable.careerconnect_logo_horizontal),
                 contentDescription = "CareerConnect Logo",
                 modifier = Modifier
-                    .fillMaxWidth(0.75f)
+                    .fillMaxWidth(0.72f)
                     .aspectRatio(990f / 235f),
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "Welcome Back",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = NavyPrimary
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = "Sign in to access your matched career opportunities",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondaryLight
+                color = TextSecondaryLight,
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            if (uiState is AuthUiState.Error) {
+            // Error Display Banner (High Contrast)
+            val errorMessage = validationError ?: (uiState as? AuthUiState.Error)?.message
+            if (errorMessage != null) {
                 Surface(
-                    color = Color(0xFFFEE2E2),
-                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFFEF2F2),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = (uiState as AuthUiState.Error).message,
-                        color = MatchLow,
+                        text = errorMessage,
+                        color = Color(0xFF991B1B),
                         fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // Email
+            // Email Input Field (High Contrast)
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Email Address") },
-                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+                onValueChange = {
+                    email = it
+                    validationError = null
+                },
+                label = { Text("Email Address", color = NavyPrimary, fontWeight = FontWeight.Medium) },
+                placeholder = { Text("name@example.com", color = TextSecondaryLight) },
+                leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = "Email", tint = NavyPrimary) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NavyPrimary,
+                    unfocusedTextColor = NavyPrimary,
+                    focusedBorderColor = AccentBlue,
+                    unfocusedBorderColor = CardBorder,
+                    cursorColor = AccentBlue
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Password
+            // Password Input Field (High Contrast with Toggle)
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                onValueChange = {
+                    password = it
+                    validationError = null
+                },
+                label = { Text("Password", color = NavyPrimary, fontWeight = FontWeight.Medium) },
+                placeholder = { Text("Enter your password", color = TextSecondaryLight) },
+                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = "Password", tint = NavyPrimary) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = null
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            tint = NavyPrimary
                         )
                     }
                 },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = NavyPrimary,
+                    unfocusedTextColor = NavyPrimary,
+                    focusedBorderColor = AccentBlue,
+                    unfocusedBorderColor = CardBorder,
+                    cursorColor = AccentBlue
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Forgot Password
             Row(
@@ -149,66 +185,154 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onNavigateToForgotPassword) {
-                    Text("Forgot Password?", color = AccentBlue, fontSize = 13.sp)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = {
-                    if (email.isNotBlank() && password.isNotBlank()) {
-                        authViewModel.login(email.trim(), password)
-                    }
-                },
-                enabled = uiState !is AuthUiState.Loading && email.isNotBlank() && password.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
-            ) {
-                if (uiState is AuthUiState.Loading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Forgot Password?", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Direct Standalone Mode (No Laptop/Server required)
-            OutlinedButton(
-                onClick = { authViewModel.loginStandalone() },
+            // Primary Sign In Button (Strict High Contrast)
+            Button(
+                onClick = {
+                    when {
+                        email.isBlank() -> validationError = "Please enter your email address."
+                        !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> validationError = "Please enter a valid email address."
+                        password.isBlank() -> validationError = "Please enter your password."
+                        else -> {
+                            validationError = null
+                            authViewModel.login(email.trim(), password)
+                        }
+                    }
+                },
+                enabled = uiState !is AuthUiState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AccentBlue)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NavyPrimary,
+                    contentColor = Color.White,
+                    disabledContainerColor = NavyPrimary.copy(alpha = 0.6f),
+                    disabledContentColor = Color.White
+                )
             ) {
-                Icon(
-                    imageVector = Icons.Default.PhoneAndroid,
-                    contentDescription = null,
-                    tint = AccentBlue,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Run on Phone (No Laptop Required)",
-                    color = AccentBlue,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Don't have an account? ", color = TextSecondaryLight)
-                TextButton(onClick = onNavigateToRegister) {
-                    Text("Register", color = AccentBlue, fontWeight = FontWeight.Bold)
+                if (uiState is AuthUiState.Loading) {
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Sign In", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Divider: OR
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
+                Text(
+                    text = "  OR  ",
+                    color = TextSecondaryLight,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Real Google Sign-In Option
+            OutlinedButton(
+                onClick = { showGoogleDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    contentColor = NavyPrimary
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Google Sign-In",
+                    tint = AccentBlue,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Continue with Google",
+                    color = NavyPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Navigation to Register
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text("Don't have an account? ", color = TextSecondaryLight, fontSize = 14.sp)
+                TextButton(onClick = onNavigateToRegister) {
+                    Text("Register Now", color = AccentBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Google Sign-In Dialog
+        if (showGoogleDialog) {
+            AlertDialog(
+                onDismissRequest = { showGoogleDialog = false },
+                title = {
+                    Text("Sign in with Google", color = NavyPrimary, fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column {
+                        Text(
+                            "Enter your Google Account email to authenticate directly through CareerConnect cloud OAuth services:",
+                            fontSize = 13.sp,
+                            color = TextSecondaryLight
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = googleEmailInput,
+                            onValueChange = { googleEmailInput = it },
+                            label = { Text("Google Email") },
+                            placeholder = { Text("you@gmail.com") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (Patterns.EMAIL_ADDRESS.matcher(googleEmailInput.trim()).matches()) {
+                                showGoogleDialog = false
+                                authViewModel.loginWithGoogle(googleEmailInput.trim())
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue, contentColor = Color.White)
+                    ) {
+                        Text("Continue", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGoogleDialog = false }) {
+                        Text("Cancel", color = TextSecondaryLight)
+                    }
+                }
+            )
         }
     }
 }

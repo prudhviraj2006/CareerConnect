@@ -6,12 +6,16 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.careerconnect.app.ui.theme.AccentBlue
 import com.careerconnect.app.ui.theme.NavyPrimary
+import com.careerconnect.app.ui.theme.TextSecondaryLight
 
 sealed class BottomNavItem(
     val route: String,
@@ -40,8 +44,8 @@ fun CareerConnectBottomBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = NavigationBarDefaults.Elevation
+        containerColor = Color.White,
+        tonalElevation = 8.dp
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
@@ -50,13 +54,14 @@ fun CareerConnectBottomBar(navController: NavController) {
                     Icon(
                         imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
                         contentDescription = item.title,
-                        tint = if (isSelected) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isSelected) AccentBlue else TextSecondaryLight
                     )
                 },
                 label = {
                     Text(
                         text = item.title,
-                        color = if (isSelected) NavyPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isSelected) NavyPrimary else TextSecondaryLight,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         style = MaterialTheme.typography.labelSmall
                     )
                 },
@@ -71,7 +76,12 @@ fun CareerConnectBottomBar(navController: NavController) {
                             restoreState = true
                         }
                     }
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = Color(0xFFEFF6FF),
+                    selectedIconColor = AccentBlue,
+                    unselectedIconColor = TextSecondaryLight
+                )
             )
         }
     }

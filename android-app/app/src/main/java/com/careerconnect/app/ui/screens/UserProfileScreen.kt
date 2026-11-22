@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.careerconnect.app.data.utils.IndiaLocations
 import com.careerconnect.app.ui.components.SkillChip
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.ProfileViewModel
@@ -36,10 +37,27 @@ fun UserProfileScreen(
         profileViewModel.loadProfile()
     }
 
+    // Calculate genuine Profile Completion Percentage
+    val completionPercentage = remember(profile) {
+        var score = 0
+        val p = profile
+        if (p != null) {
+            if (!p.fullName.isNullOrBlank()) score += 15
+            if (!p.email.isNullOrBlank()) score += 15
+            if (!p.phoneNumber.isNullOrBlank()) score += 10
+            if (!p.collegeUniversity.isNullOrBlank()) score += 15
+            if (!p.degree.isNullOrBlank()) score += 10
+            if (p.graduationYear != null && p.graduationYear > 1970) score += 10
+            if (p.technicalSkills.isNotEmpty()) score += 15
+            if (!p.preferredJobRole.isNullOrBlank() || !p.preferredLocation.isNullOrBlank()) score += 10
+        }
+        score.coerceIn(0, 100)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Candidate Profile", color = NavyPrimary) },
+                title = { Text("Candidate Profile", color = NavyPrimary, fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings", tint = NavyPrimary)
@@ -57,7 +75,7 @@ fun UserProfileScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            // Hero Card
+            // Hero Profile Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -76,73 +94,149 @@ fun UserProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = profile?.fullName?.take(1)?.uppercase() ?: "U",
+                            text = profile?.fullName?.take(1)?.uppercase() ?: "C",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = profile?.fullName ?: "Candidate Name",
+                        text = profile?.fullName?.takeIf { it.isNotBlank() } ?: "Not added yet",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = NavyPrimary
                     )
 
+                    Spacer(modifier = Modifier.height(2.dp))
+
                     Text(
-                        text = profile?.email ?: "",
+                        text = profile?.email?.takeIf { it.isNotBlank() } ?: "Email not added yet",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondaryLight
                     )
 
-                    profile?.phoneNumber?.let {
-                        Text(text = it, style = MaterialTheme.typography.bodySmall, color = TextSecondaryLight)
+                    if (!profile?.phoneNumber.isNullOrBlank()) {
+                        Text(
+                            text = profile!!.phoneNumber!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondaryLight
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
+                    // Verified Badge: Only displayed when genuinely confirmed by user
+                    val isGenuinelyVerified = profile?.isConfirmedByUser == true && !profile?.fullName.isNullOrBlank()
                     Surface(
-                        color = if (profile?.isConfirmedByUser == true) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
+                        color = if (isGenuinelyVerified) Color(0xFFD1FAE5) else Color(0xFFFEF3C7),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(
-                            text = if (profile?.isConfirmedByUser == true) "Verified Candidate Profile" else "Profile Unverified",
-                            color = if (profile?.isConfirmedByUser == true) MatchHigh else MatchModerate,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
+                        ) {
+                            Icon(
+                                imageVector = if (isGenuinelyVerified) Icons.Default.CheckCircle else Icons.Default.Info,
+                                contentDescription = null,
+                                tint = if (isGenuinelyVerified) MatchHigh else MatchModerate,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isGenuinelyVerified) "Verified Profile" else "Profile Incomplete",
+                                color = if (isGenuinelyVerified) MatchHigh else MatchModerate,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Action Buttons (Explicit High Contrast)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Button(
                             onClick = onNavigateToEditProfile,
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary, contentColor = Color.White)
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Edit Profile")
+                            Text("Edit Profile", color = Color.White, fontWeight = FontWeight.Bold)
                         }
 
                         OutlinedButton(
                             onClick = onNavigateToResumeUpload,
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Resume")
+                            Text("Resume", color = AccentBlue, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Profile Completion Progress Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Profile Completion",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = NavyPrimary
+                        )
+                        Text(
+                            text = "$completionPercentage%",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = AccentBlue
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LinearProgressIndicator(
+                        progress = { completionPercentage / 100f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = AccentBlue,
+                        trackColor = Color(0xFFE2E8F0)
+                    )
+
+                    if (completionPercentage < 80) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Tip: Complete education, graduation year, and skills to maximize match scores.",
+                            fontSize = 11.sp,
+                            color = TextSecondaryLight
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Education Card
             Card(
@@ -154,25 +248,25 @@ fun UserProfileScreen(
                     Text(text = "Education", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = profile?.collegeUniversity ?: "University not specified",
+                        text = profile?.collegeUniversity?.takeIf { it.isNotBlank() } ?: "Not added yet",
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimaryLight,
+                        color = if (profile?.collegeUniversity.isNullOrBlank()) TextSecondaryLight else TextPrimaryLight,
                         fontSize = 14.sp
                     )
                     Text(
-                        text = "${profile?.degree ?: "Degree not set"} ${if (profile?.graduationYear != null) "• Class of ${profile?.graduationYear}" else ""}",
+                        text = "${profile?.degree?.takeIf { it.isNotBlank() } ?: "Degree not set"} ${if (profile?.graduationYear != null) "• Class of ${profile?.graduationYear}" else ""}",
                         color = TextSecondaryLight,
                         fontSize = 13.sp
                     )
-                    profile?.specialization?.let {
-                        Text(text = "Specialization: $it", color = TextSecondaryLight, fontSize = 12.sp)
+                    if (!profile?.specialization.isNullOrBlank()) {
+                        Text(text = "Specialization: ${profile!!.specialization}", color = TextSecondaryLight, fontSize = 12.sp)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Verified Technical Skills
+            // Verified Technical Skills Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -180,7 +274,7 @@ fun UserProfileScreen(
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "Verified Technical Skills (${profile?.technicalSkills?.size ?: 0})",
+                        text = "Confirmed Technical Skills (${profile?.technicalSkills?.size ?: 0})",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = NavyPrimary
@@ -194,14 +288,18 @@ fun UserProfileScreen(
                             }
                         }
                     } else {
-                        Text("No technical skills verified yet. Tap Edit Profile or Upload Resume to add.", color = TextSecondaryLight, fontSize = 13.sp)
+                        Text(
+                            text = "No technical skills confirmed yet. Tap Edit Profile or Upload Resume to add your skills.",
+                            color = TextSecondaryLight,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Career Preferences
+            // Career Preferences & Experience (India)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -210,10 +308,17 @@ fun UserProfileScreen(
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(text = "Preferences & Experience", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
                     Spacer(modifier = Modifier.height(10.dp))
-                    ProfileDetailRow("Preferred Role", profile?.preferredJobRole ?: "Not specified")
-                    ProfileDetailRow("Location", profile?.preferredLocation ?: "Not specified")
-                    ProfileDetailRow("Employment Type", profile?.employmentTypePreference ?: "Full-time")
-                    ProfileDetailRow("Experience", "${profile?.experienceYears ?: 0f} years")
+                    ProfileDetailRow("Preferred Role", profile?.preferredJobRole?.takeIf { it.isNotBlank() } ?: "Not added yet")
+                    ProfileDetailRow("Preferred Location", profile?.preferredLocation?.takeIf { it.isNotBlank() } ?: "India (Any)")
+                    ProfileDetailRow("Employment Type", profile?.employmentTypePreference?.takeIf { it.isNotBlank() } ?: "Full-time")
+                    ProfileDetailRow(
+                        "Experience",
+                        if ((profile?.experienceYears ?: 0f) == 0f) "Fresher" else "${profile?.experienceYears} years"
+                    )
+                    ProfileDetailRow(
+                        "Expected Salary",
+                        IndiaLocations.formatIndianSalary(profile?.expectedSalary)
+                    )
                 }
             }
 
@@ -227,7 +332,7 @@ fun ProfileDetailRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = label, color = TextSecondaryLight, fontSize = 13.sp)

@@ -192,18 +192,33 @@ class AdzunaJobProvider(BaseJobProvider):
                     for item in data.get("results", []):
                         desc = clean_html(item.get("description", ""))
                         skills = extract_skills_from_text_and_tags(desc, [])
+                        location_name = item.get("location", {}).get("display_name", "India")
+                        salary_min = item.get("salary_min")
+                        salary_max = item.get("salary_max")
+                        salary_str = None
+                        if salary_min:
+                            if settings.ADZUNA_COUNTRY == "in":
+                                if salary_min >= 100000:
+                                    min_lpa = round(salary_min / 100000, 1)
+                                    max_lpa = round((salary_max or salary_min) / 100000, 1)
+                                    salary_str = f"₹{min_lpa} - ₹{max_lpa} LPA"
+                                else:
+                                    salary_str = f"₹{int(salary_min):,}"
+                            else:
+                                salary_str = f"${salary_min:,.0f} - ${salary_max:,.0f}" if salary_max else f"${salary_min:,.0f}"
+
                         normalized_jobs.append({
                             "external_id": str(item.get("id")),
                             "title": item.get("title", "").strip(),
                             "company_name": item.get("company", {}).get("display_name", "Employer").strip(),
                             "company_logo": None,
-                            "location": item.get("location", {}).get("display_name", "USA"),
+                            "location": location_name,
                             "employment_type": item.get("contract_type", "Full-time").capitalize(),
                             "experience_level": "Mid-level",
                             "experience_years_required": 2.0,
                             "min_education": "Bachelor's Degree",
                             "description": desc[:4000],
-                            "salary": f"${item.get('salary_min', '')} - ${item.get('salary_max', '')}" if item.get("salary_min") else None,
+                            "salary": salary_str,
                             "publication_date": datetime.fromisoformat(item["created"]) if item.get("created") else None,
                             "original_url": item.get("redirect_url", ""),
                             "is_remote": "remote" in desc.lower() or "remote" in item.get("title", "").lower(),

@@ -7,6 +7,7 @@ from backend.app.models.all_models import User, UserProfile
 from backend.app.schemas.schemas import (
     UserRegisterRequest,
     UserLoginRequest,
+    GoogleLoginRequest,
     TokenResponse,
     RefreshTokenRequest,
     ForgotPasswordRequest,
@@ -77,6 +78,49 @@ def login(req: UserLoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
         )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your account has been deactivated."
+        )
+
+    access_token = create_access_token({"sub": str(user.id), "email": user.email})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user)
+    )
+
+@router.post("/google", response_model=TokenResponse)
+def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
+    email_clean = req.email.lower().strip()
+    user = db.query(User).filter(User.email == email_clean).first()
+
+    if not user:
+        # Register new Google OAuth user automatically
+        user = User(
+            email=email_clean,
+            hashed_password=hash_password(f"google_oauth_{email_clean}_2026"),
+            full_name=req.full_name.strip() if req.full_name else email_clean.split("@")[0].title(),
+            is_active=True,
+            is_verified=True # Email pre-verified by Google
+        )
+        db.add(user)
+        db.flush()
+
+        profile = UserProfile(
+            user_id=user.id,
+            full_name=user.full_name,
+            email=user.email,
+            is_confirmed_by_user=True
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(user)
 
     if not user.is_active:
         raise HTTPException(

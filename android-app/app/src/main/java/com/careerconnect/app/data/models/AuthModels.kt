@@ -14,6 +14,13 @@ data class LoginRequest(
     @SerializedName("password") val password: String
 )
 
+data class GoogleLoginRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("full_name") val fullName: String? = null,
+    @SerializedName("id_token") val idToken: String? = null,
+    @SerializedName("photo_url") val photoUrl: String? = null
+)
+
 data class TokenResponse(
     @SerializedName("access_token") val accessToken: String,
     @SerializedName("token_type") val tokenType: String,

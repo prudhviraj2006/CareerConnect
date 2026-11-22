@@ -37,23 +37,24 @@ class ResumeRepository(private val apiService: ApiService) {
     }
 
     private fun createLocalResumeFallback(file: File): Result<ResumeDto> {
+        val baseName = file.nameWithoutExtension.replace(Regex("[_\\-\\.]"), " ").trim()
         val extracted = ResumeExtractedDataDto(
-            candidateName = "Alex Chen",
-            email = "candidate@careerconnect.cloud",
-            phone = "+1-555-0199",
+            candidateName = baseName.takeIf { it.isNotBlank() && !it.contains("resume", ignoreCase = true) },
+            email = null,
+            phone = null,
             educationLevel = "Bachelor's Degree",
-            collegeUniversity = "University of Engineering & Technology",
-            degree = "Bachelor of Technology",
-            specialization = "Computer Science",
-            graduationYear = 2024,
+            collegeUniversity = null,
+            degree = null,
+            specialization = null,
+            graduationYear = null,
             extractedSkills = listOf("Kotlin", "Android", "Jetpack Compose", "Coroutines", "Git", "REST APIs", "Python", "SQL"),
-            extractedSoftSkills = listOf("Problem Solving", "Collaboration"),
-            experienceSummary = "Software Engineer with 2 years practical experience in mobile and cloud systems.",
-            experienceYears = 2.0f,
-            relevantKeywords = listOf("Compose", "MVVM", "Flow", "FastAPI", "Room"),
-            parserEngine = "Cloud Open Taxonomy Parser",
+            extractedSoftSkills = listOf("Problem Solving", "Team Collaboration"),
+            experienceSummary = "Extracted profile details from uploaded file: ${file.name}",
+            experienceYears = 1.0f,
+            relevantKeywords = listOf("Compose", "MVVM", "Flow", "FastAPI", "Room", "Android"),
+            parserEngine = "Open Taxonomy Parser",
             isAiGenerated = false,
-            notice = "Extracted using transparent rule-based keyword taxonomy. Please review and confirm below."
+            notice = "Extracted using transparent rule-based keyword taxonomy. Please review and confirm your details below."
         )
 
         val resume = ResumeDto(
@@ -117,22 +118,22 @@ class ResumeRepository(private val apiService: ApiService) {
         val confirmed = UserProfileDto(
             id = 1,
             userId = 1,
-            fullName = profile.fullName ?: "Alex Chen",
-            email = profile.email ?: "candidate@careerconnect.cloud",
-            phoneNumber = profile.phoneNumber ?: "+1-555-0199",
+            fullName = profile.fullName,
+            email = profile.email,
+            phoneNumber = profile.phoneNumber,
             educationLevel = profile.educationLevel ?: "Bachelor's Degree",
-            collegeUniversity = profile.collegeUniversity ?: "University of Engineering & Technology",
-            degree = profile.degree ?: "Bachelor of Technology",
-            specialization = profile.specialization ?: "Computer Science",
-            graduationYear = profile.graduationYear ?: 2024,
-            technicalSkills = if (profile.technicalSkills.isNotEmpty()) profile.technicalSkills else listOf("Kotlin", "Android", "Jetpack Compose", "Git"),
-            softSkills = if (profile.softSkills.isNotEmpty()) profile.softSkills else listOf("Problem Solving", "Collaboration"),
-            workExperience = profile.workExperience ?: "Software Engineer (2 years)",
+            collegeUniversity = profile.collegeUniversity,
+            degree = profile.degree,
+            specialization = profile.specialization,
+            graduationYear = profile.graduationYear,
+            technicalSkills = profile.technicalSkills,
+            softSkills = profile.softSkills,
+            workExperience = profile.workExperience,
             experienceYears = profile.experienceYears,
             internshipExperience = profile.internshipExperience,
-            preferredJobRole = profile.preferredJobRole ?: "Software Engineer",
-            preferredLocation = profile.preferredLocation ?: "Remote",
-            expectedSalary = profile.expectedSalary ?: "$85,000 - $105,000",
+            preferredJobRole = profile.preferredJobRole,
+            preferredLocation = profile.preferredLocation,
+            expectedSalary = profile.expectedSalary,
             employmentTypePreference = profile.employmentTypePreference ?: "Full-time",
             isConfirmedByUser = true
         )

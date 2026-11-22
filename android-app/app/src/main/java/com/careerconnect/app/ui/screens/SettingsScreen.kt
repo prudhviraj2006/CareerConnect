@@ -6,8 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +37,7 @@ fun SettingsScreen(
     val prefs by notificationViewModel.preferences.collectAsState()
     var serverUrl by remember { mutableStateOf(RetrofitClient.getBaseUrl()) }
     var urlSavedMessage by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -54,9 +55,37 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Server URL Configuration Card
+            // 1. India-First Regional Configuration Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Language, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Regional & Market Settings",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = NavyPrimary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    SettingInfoRow("Primary Market", "India (Bharat)")
+                    SettingInfoRow("Default Currency", "Indian Rupee (INR – ₹)")
+                    SettingInfoRow("Standard Timezone", "Asia/Kolkata (IST)")
+                    SettingInfoRow("Date Format", "DD-MM-YYYY")
+                    SettingInfoRow("Language", "English")
+                }
+            }
+
+            // 2. Cloud Backend Server Connection Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -64,22 +93,25 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "Backend Server Connection",
+                        text = "Cloud Backend Connection",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = NavyPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Connects to the 24/7 Cloud Backend (HTTPS). You can point to your own cloud instance (Render, Railway, Koyeb) or leave as default. No laptop or local computer required.",
+                        text = "Connected 24/7 to the live HTTPS cloud backend on Render. No laptop, local server, or terminal required to operate.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondaryLight
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = serverUrl,
-                        onValueChange = { serverUrl = it; urlSavedMessage = false },
-                        label = { Text("Base API URL") },
+                        onValueChange = {
+                            serverUrl = it
+                            urlSavedMessage = false
+                        },
+                        label = { Text("Base Cloud API URL") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     )
@@ -89,18 +121,18 @@ fun SettingsScreen(
                             RetrofitClient.setBaseUrl(serverUrl.trim())
                             urlSavedMessage = true
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue, contentColor = Color.White)
                     ) {
-                        Text("Save Server URL")
+                        Text("Save Cloud URL", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                     if (urlSavedMessage) {
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("Server URL updated successfully.", color = MatchHigh, fontSize = 12.sp)
+                        Text("Cloud URL updated successfully.", color = MatchHigh, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
-            // Notification Preferences Card
+            // 3. Notification Preferences Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -108,47 +140,37 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "Notification Preferences",
+                        text = "Push Notification Preferences",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = NavyPrimary
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     SettingToggleRow(
-                        title = "Job Match Alerts",
-                        subtitle = "Notify when high compatibility jobs are found",
+                        title = "Skill-Match Alerts",
+                        subtitle = "Alert when an Indian employer posts a role with >70% match",
                         checked = prefs.jobMatchesEnabled,
-                        onCheckedChange = {
-                            notificationViewModel.updatePreferences(prefs.copy(jobMatchesEnabled = it))
-                        }
+                        onCheckedChange = { notificationViewModel.updatePreferences(prefs.copy(jobMatchesEnabled = it)) }
                     )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = DividerColor)
-
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = CardBorder)
                     SettingToggleRow(
-                        title = "Recommendation Updates",
-                        subtitle = "Alert on weekly top career recommendations",
-                        checked = prefs.recommendationsEnabled,
-                        onCheckedChange = {
-                            notificationViewModel.updatePreferences(prefs.copy(recommendationsEnabled = it))
-                        }
-                    )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = DividerColor)
-
-                    SettingToggleRow(
-                        title = "Application Tracking Alerts",
-                        subtitle = "Reminders on application status updates",
+                        title = "Application Status Updates",
+                        subtitle = "Notify when there is progress on tracked applications",
                         checked = prefs.applicationUpdatesEnabled,
-                        onCheckedChange = {
-                            notificationViewModel.updatePreferences(prefs.copy(applicationUpdatesEnabled = it))
-                        }
+                        onCheckedChange = { notificationViewModel.updatePreferences(prefs.copy(applicationUpdatesEnabled = it)) }
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = CardBorder)
+                    SettingToggleRow(
+                        title = "Recommended Job Digest",
+                        subtitle = "Receive notifications for personalized career recommendations",
+                        checked = prefs.recommendationsEnabled,
+                        onCheckedChange = { notificationViewModel.updatePreferences(prefs.copy(recommendationsEnabled = it)) }
                     )
                 }
             }
 
-            // UN SDG 8 Information Card
+            // 4. UN SDG 8 Information Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -167,7 +189,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "CareerConnect promotes sustained, inclusive and sustainable economic growth, full and productive employment and decent work for all through fair, skill-based compatibility matching.",
+                            text = "CareerConnect promotes decent work and economic growth in India through transparent, merit-based skill compatibility matching without bias.",
                             fontSize = 12.sp,
                             color = TextSecondaryLight
                         )
@@ -175,7 +197,7 @@ fun SettingsScreen(
                 }
             }
 
-            // About CareerConnect Card
+            // 5. About CareerConnect Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -193,24 +215,24 @@ fun SettingsScreen(
                             .aspectRatio(990f / 235f),
                         contentScale = ContentScale.Fit
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Version 1.0.0 (Production)",
-                        fontWeight = FontWeight.Medium,
+                        text = "Version 1.0.0 (Production Release)",
+                        fontWeight = FontWeight.Bold,
                         color = TextSecondaryLight,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Intelligent Skill-Based Job Matching Application",
-                        fontWeight = FontWeight.Normal,
+                        text = "Intelligent Skill-Based Job Matching Application for India",
+                        fontWeight = FontWeight.Medium,
                         color = NavyPrimary,
                         fontSize = 12.sp
                     )
                 }
             }
 
-            // Sign Out Button
+            // 6. Sign Out Button
             Button(
                 onClick = {
                     authViewModel.logout()
@@ -218,17 +240,79 @@ fun SettingsScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MatchLow)
+                colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary, contentColor = Color.White)
             ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Sign Out", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Sign Out", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            // 7. Delete Account & Personal Data Button
+            OutlinedButton(
+                onClick = { showDeleteConfirmDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MatchLow),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MatchLow.copy(alpha = 0.5f))
+            ) {
+                Icon(Icons.Default.DeleteForever, contentDescription = null, tint = MatchLow)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Delete Account & Wipe Data", color = MatchLow, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
+
+        // Delete Account Confirmation Dialog
+        if (showDeleteConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmDialog = false },
+                title = {
+                    Text("Delete Account & Data?", color = MatchLow, fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Text(
+                        "This will permanently erase your candidate profile, uploaded resumes, skill history, saved jobs, and tracked applications. This action cannot be undone.",
+                        fontSize = 13.sp,
+                        color = TextSecondaryLight
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeleteConfirmDialog = false
+                            authViewModel.logout()
+                            onLogout()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MatchLow, contentColor = Color.White)
+                    ) {
+                        Text("Delete Permanently", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                        Text("Cancel", color = TextSecondaryLight)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 13.sp, color = TextSecondaryLight)
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = NavyPrimary)
     }
 }
 
