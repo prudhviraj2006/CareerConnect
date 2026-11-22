@@ -1,5 +1,6 @@
 package com.careerconnect.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,10 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.careerconnect.app.R
 import com.careerconnect.app.ui.theme.*
 
 data class OnboardingPage(
@@ -66,13 +70,24 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Skip Button
+            // Top Header: Logo + Skip Button
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.careerconnect_logo_horizontal),
+                    contentDescription = "CareerConnect",
+                    modifier = Modifier
+                        .height(32.dp)
+                        .aspectRatio(990f / 235f),
+                    contentScale = ContentScale.Fit
+                )
                 TextButton(onClick = onFinishOnboarding) {
-                    Text(text = "Skip", color = TextSecondaryLight)
+                    Text(text = "Skip", color = TextSecondaryLight, fontWeight = FontWeight.SemiBold)
                 }
             }
 

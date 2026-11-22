@@ -1,5 +1,6 @@
 package com.careerconnect.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.careerconnect.app.R
 import com.careerconnect.app.data.models.JobDto
 import com.careerconnect.app.ui.components.EmptyStateView
 import com.careerconnect.app.ui.components.JobCard
@@ -61,20 +64,13 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
+                        Image(
+                            painter = painterResource(id = R.drawable.careerconnect_icon_square),
+                            contentDescription = "CareerConnect",
                             modifier = Modifier
                                 .size(36.dp)
-                                .clip(CircleShape)
-                                .background(NavyPrimary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Work,
-                                contentDescription = null,
-                                tint = AccentCyan,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                                .clip(RoundedCornerShape(8.dp))
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(

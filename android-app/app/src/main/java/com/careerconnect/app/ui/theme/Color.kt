@@ -2,18 +2,20 @@ package com.careerconnect.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val NavyPrimary = Color(0xFF0D1B2A)
-val NavySecondary = Color(0xFF1B263B)
-val NavyLight = Color(0xFF415A77)
-val AccentBlue = Color(0xFF1976D2)
-val AccentCyan = Color(0xFF0077B6)
+// Official CareerConnect Brand Color System
+val NavyPrimary = Color(0xFF071A52)       // Primary navy from logo
+val NavySecondary = Color(0xFF0D2B82)     // Deeper navy variant
+val NavyLight = Color(0xFF1E3A8A)         // Accessible navy accent
+val AccentBlue = Color(0xFF0866F5)        // Primary blue from wordmark
+val AccentCyan = Color(0xFF16C7F2)        // Accent cyan from upward growth arrow
 
-val BackgroundLight = Color(0xFFF8F9FA)
+val BackgroundLight = Color(0xFFFFFFFF)       // Clean white background
+val SecondaryBackground = Color(0xFFF5F7FC)   // Subtle light tint
 val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceVariantLight = Color(0xFFE9ECEF)
+val SurfaceVariantLight = Color(0xFFF5F7FC)
 
-val TextPrimaryLight = Color(0xFF0F172A)
-val TextSecondaryLight = Color(0xFF475569)
+val TextPrimaryLight = Color(0xFF111827)     // Primary text
+val TextSecondaryLight = Color(0xFF64748B)   // Secondary text
 val TextTertiaryLight = Color(0xFF94A3B8)
 
 val MatchHigh = Color(0xFF10B981)      // Green (>=75%)

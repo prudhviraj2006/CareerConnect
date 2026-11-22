@@ -1,6 +1,7 @@
 package com.careerconnect.app
 
 import android.app.Application
+import android.util.Log
 import com.careerconnect.app.data.api.RetrofitClient
 import com.careerconnect.app.data.local.AppDatabase
 import com.careerconnect.app.data.preferences.UserPreferencesDataStore
@@ -11,7 +12,7 @@ class CareerConnectApp : Application() {
     lateinit var preferencesDataStore: UserPreferencesDataStore
         private set
 
-    lateinit var database: AppDatabase
+    var database: AppDatabase? = null
         private set
 
     lateinit var authRepository: AuthRepository
@@ -32,15 +33,25 @@ class CareerConnectApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        preferencesDataStore = UserPreferencesDataStore(this)
-        database = AppDatabase.getInstance(this)
+        try {
+            preferencesDataStore = UserPreferencesDataStore(this)
+        } catch (e: Throwable) {
+            Log.e("CareerConnectApp", "PreferencesDataStore init warning: ${e.message}")
+        }
+
+        try {
+            database = AppDatabase.getInstance(this)
+        } catch (e: Throwable) {
+            Log.e("CareerConnectApp", "Room database init warning: ${e.message}")
+            database = null
+        }
 
         val apiService = RetrofitClient.getApiService(this)
 
         authRepository = AuthRepository(apiService, preferencesDataStore)
         profileRepository = ProfileRepository(apiService)
         resumeRepository = ResumeRepository(apiService)
-        jobRepository = JobRepository(apiService, database.jobDao())
+        jobRepository = JobRepository(apiService, database?.jobDao())
         notificationRepository = NotificationRepository(apiService)
     }
 }

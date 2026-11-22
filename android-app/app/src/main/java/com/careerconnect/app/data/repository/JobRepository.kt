@@ -7,7 +7,7 @@ import com.careerconnect.app.data.models.*
 
 class JobRepository(
     private val apiService: ApiService,
-    private val jobDao: JobDao
+    private val jobDao: JobDao? = null
 ) {
 
     private val localSavedJobIds = mutableSetOf<Int>()
@@ -85,12 +85,12 @@ class JobRepository(
     )
 
     private suspend fun ensureLocalCache(): List<JobDto> {
-        val cached = jobDao.getJobList()
+        val cached = jobDao?.getJobList() ?: emptyList()
         if (cached.isNotEmpty()) {
             return cached.map { mapEntityToDto(it) }
         }
         val entities = sampleJobs.map { mapDtoToEntity(it) }
-        jobDao.insertJobs(entities)
+        jobDao?.insertJobs(entities)
         return sampleJobs
     }
 
@@ -154,7 +154,7 @@ class JobRepository(
             if (response.isSuccessful && response.body() != null) {
                 val jobs = response.body()!!
                 val entities = jobs.map { mapDtoToEntity(it) }
-                jobDao.insertJobs(entities)
+                jobDao?.insertJobs(entities)
                 Result.success(jobs)
             } else {
                 Result.success(ensureLocalCache())
@@ -205,7 +205,7 @@ class JobRepository(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                val cached = jobDao.getJobById(jobId)
+                val cached = jobDao?.getJobById(jobId)
                 if (cached != null) {
                     Result.success(mapEntityToDto(cached))
                 } else {
@@ -214,7 +214,7 @@ class JobRepository(
                 }
             }
         } catch (e: Exception) {
-            val cached = jobDao.getJobById(jobId)
+            val cached = jobDao?.getJobById(jobId)
             if (cached != null) {
                 Result.success(mapEntityToDto(cached))
             } else {

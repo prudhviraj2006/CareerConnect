@@ -1,7 +1,10 @@
 package com.careerconnect.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -15,10 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.careerconnect.app.R
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.AuthUiState
 import com.careerconnect.app.ui.viewmodels.AuthViewModel
@@ -48,18 +54,33 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Official CareerConnect Horizontal Logo
+            Image(
+                painter = painterResource(id = R.drawable.careerconnect_logo_horizontal),
+                contentDescription = "CareerConnect Logo",
+                modifier = Modifier
+                    .fillMaxWidth(0.75f)
+                    .aspectRatio(990f / 235f),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
             Text(
                 text = "Welcome Back",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = NavyPrimary
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Sign in to access your matched career opportunities",
