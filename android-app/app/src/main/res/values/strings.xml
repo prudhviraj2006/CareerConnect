@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CareerConnect</string>
+    <string name="tagline">Intelligent Skill-Based Job Matching</string>
+    <string name="sdg_target">Promoting Decent Work &amp; Economic Growth (UN SDG 8)</string>
+</resources>

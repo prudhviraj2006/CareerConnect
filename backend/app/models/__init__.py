@@ -1,0 +1,31 @@
+from backend.app.models.all_models import (
+    User,
+    UserProfile,
+    Resume,
+    UserSkill,
+    JobSource,
+    Job,
+    JobRequiredSkill,
+    JobMatch,
+    Recommendation,
+    SavedJob,
+    Application,
+    Notification,
+    NotificationPreference,
+)
+
+__all__ = [
+    "User",
+    "UserProfile",
+    "Resume",
+    "UserSkill",
+    "JobSource",
+    "Job",
+    "JobRequiredSkill",
+    "JobMatch",
+    "Recommendation",
+    "SavedJob",
+    "Application",
+    "Notification",
+    "NotificationPreference",
+]
