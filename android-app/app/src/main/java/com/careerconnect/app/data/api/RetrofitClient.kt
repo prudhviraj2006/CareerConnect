@@ -10,11 +10,10 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    // Default Production Cloud Backend (HTTPS)
-    // Users can also customize this via the in-app Settings screen at any time!
+    // Live Cloud Backend (HTTPS) hosted on Render.com
     private var customBaseUrl: String? = null
 
-    private const val DEFAULT_BASE_URL = "https://careerconnect-api.onrender.com/"
+    private const val DEFAULT_BASE_URL = "https://careerconnect-backend-cpki.onrender.com/"
 
     fun getBaseUrl(): String {
         return customBaseUrl ?: DEFAULT_BASE_URL
