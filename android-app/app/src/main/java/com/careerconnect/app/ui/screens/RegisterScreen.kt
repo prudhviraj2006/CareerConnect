@@ -25,6 +25,7 @@ import com.careerconnect.app.R
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.AuthUiState
 import com.careerconnect.app.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -40,12 +41,21 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
 
+    var fullNameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
     val uiState by authViewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             onRegisterSuccess()
             authViewModel.resetState()
+        } else if (uiState is AuthUiState.Error) {
+            scrollState.animateScrollTo(scrollState.maxValue)
         }
     }
 
@@ -54,7 +64,8 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .verticalScroll(scrollState)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -87,52 +98,46 @@ fun RegisterScreen(
                 color = TextSecondaryLight
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Error display
-            val errorText = validationError ?: (uiState as? AuthUiState.Error)?.message
-            if (errorText != null) {
-                Surface(
-                    color = Color(0xFFFEE2E2),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = errorText,
-                        color = MatchLow,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Full Name Field
             OutlinedTextField(
                 value = fullName,
-                onValueChange = { fullName = it; validationError = null },
+                onValueChange = {
+                    fullName = it
+                    fullNameError = null
+                    validationError = null
+                },
                 label = { Text("Full Name") },
                 leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                 singleLine = true,
+                isError = fullNameError != null,
+                supportingText = fullNameError?.let { { Text(it, color = MatchLow) } },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Email Field
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it; validationError = null },
+                onValueChange = {
+                    email = it
+                    emailError = null
+                    validationError = null
+                },
                 label = { Text("Email Address") },
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = emailError != null,
+                supportingText = emailError?.let { { Text(it, color = MatchLow) } },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Phone Field
             OutlinedTextField(
@@ -146,12 +151,16 @@ fun RegisterScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Password Field
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it; validationError = null },
+                onValueChange = {
+                    password = it
+                    passwordError = null
+                    validationError = null
+                },
                 label = { Text("Password (Min 6 characters)") },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 trailingIcon = {
@@ -165,39 +174,99 @@ fun RegisterScreen(
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = passwordError != null,
+                supportingText = passwordError?.let { { Text(it, color = MatchLow) } },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Confirm Password Field
             OutlinedTextField(
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it; validationError = null },
+                onValueChange = {
+                    confirmPassword = it
+                    confirmPasswordError = null
+                    validationError = null
+                },
                 label = { Text("Confirm Password") },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = confirmPasswordError != null,
+                supportingText = confirmPasswordError?.let { { Text(it, color = MatchLow) } },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Error display placed directly above Create Account button
+            val activeError = validationError ?: (uiState as? AuthUiState.Error)?.message
+            if (activeError != null) {
+                Surface(
+                    color = Color(0xFFFEE2E2),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ErrorOutline,
+                            contentDescription = null,
+                            tint = MatchLow,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = activeError,
+                            color = MatchLow,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Button(
                 onClick = {
+                    var hasError = false
                     if (fullName.isBlank()) {
-                        validationError = "Please enter your full name."
-                    } else if (email.isBlank() || !email.contains("@")) {
-                        validationError = "Please enter a valid email address."
-                    } else if (password.length < 6) {
-                        validationError = "Password must be at least 6 characters."
-                    } else if (password != confirmPassword) {
-                        validationError = "Passwords do not match."
+                        fullNameError = "Please enter your full name."
+                        hasError = true
+                    }
+                    if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+                        emailError = "Please enter a valid email address."
+                        hasError = true
+                    }
+                    if (password.length < 6) {
+                        passwordError = "Password must be at least 6 characters."
+                        hasError = true
+                    }
+                    if (password != confirmPassword) {
+                        confirmPasswordError = "Passwords do not match."
+                        hasError = true
+                    }
+
+                    if (hasError) {
+                        validationError = "Please correct the highlighted fields."
+                        coroutineScope.launch {
+                            scrollState.animateScrollTo(scrollState.maxValue)
+                        }
                     } else {
-                        authViewModel.register(email.trim(), password, fullName.trim(), phone.trim().takeIf { it.isNotBlank() })
+                        validationError = null
+                        authViewModel.register(
+                            email = email.trim(),
+                            pass = password,
+                            name = fullName.trim(),
+                            phone = phone.trim().takeIf { it.isNotBlank() }
+                        )
                     }
                 },
                 enabled = uiState !is AuthUiState.Loading,
@@ -210,7 +279,7 @@ fun RegisterScreen(
                 if (uiState is AuthUiState.Loading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Register", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Create Account", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 

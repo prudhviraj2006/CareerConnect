@@ -12,6 +12,27 @@ class AuthRepository(
     val accessTokenFlow: Flow<String?> = preferencesDataStore.accessTokenFlow
     val isOnboardingCompletedFlow: Flow<Boolean> = preferencesDataStore.isOnboardingCompletedFlow
 
+    private fun extractErrorMessage(errorBody: String?, fallback: String): String {
+        if (errorBody.isNullOrBlank()) return fallback
+        return try {
+            val json = org.json.JSONObject(errorBody)
+            if (json.has("detail")) {
+                val detail = json.get("detail")
+                if (detail is org.json.JSONArray && detail.length() > 0) {
+                    detail.getJSONObject(0).optString("msg", fallback)
+                } else {
+                    detail.toString()
+                }
+            } else if (json.has("message")) {
+                json.getString("message")
+            } else {
+                fallback
+            }
+        } catch (_: Exception) {
+            errorBody.take(150)
+        }
+    }
+
     suspend fun register(req: RegisterRequest): Result<TokenResponse> {
         return try {
             val response = apiService.register(req)
@@ -26,7 +47,8 @@ class AuthRepository(
                 )
                 Result.success(token)
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Registration failed."
+                val rawError = response.errorBody()?.string()
+                val errorMsg = extractErrorMessage(rawError, "Registration failed.")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -48,7 +70,8 @@ class AuthRepository(
                 )
                 Result.success(token)
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Invalid login credentials."
+                val rawError = response.errorBody()?.string()
+                val errorMsg = extractErrorMessage(rawError, "Invalid login credentials.")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
