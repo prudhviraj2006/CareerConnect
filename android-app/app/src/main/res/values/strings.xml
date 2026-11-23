@@ -2,4 +2,6 @@
     <string name="app_name">CareerConnect</string>
     <string name="tagline">Intelligent Skill-Based Job Matching</string>
     <string name="sdg_target">Promoting Decent Work &amp; Economic Growth (UN SDG 8)</string>
+    <!-- Google OAuth 2.0 Web Client ID: Configured for Android Credential Manager -->
+    <string name="default_web_client_id" translatable="false">YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com</string>
 </resources>

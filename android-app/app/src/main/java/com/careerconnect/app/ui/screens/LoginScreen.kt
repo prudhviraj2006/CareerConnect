@@ -38,6 +38,8 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import com.careerconnect.app.R
+import com.careerconnect.app.ui.components.careerConnectTextFieldColors
+import com.careerconnect.app.ui.components.careerConnectTextStyle
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.AuthUiState
 import com.careerconnect.app.ui.viewmodels.AuthViewModel
@@ -138,17 +140,12 @@ fun LoginScreen(
                     validationError = null
                 },
                 label = { Text("Email Address", color = NavyPrimary, fontWeight = FontWeight.Medium) },
-                placeholder = { Text("name@example.com", color = TextSecondaryLight) },
+                placeholder = { Text("name@example.com") },
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = "Email", tint = NavyPrimary) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = NavyPrimary,
-                    unfocusedTextColor = NavyPrimary,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = CardBorder,
-                    cursorColor = AccentBlue
-                ),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -163,7 +160,7 @@ fun LoginScreen(
                     validationError = null
                 },
                 label = { Text("Password", color = NavyPrimary, fontWeight = FontWeight.Medium) },
-                placeholder = { Text("Enter your password", color = TextSecondaryLight) },
+                placeholder = { Text("Enter your password") },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = "Password", tint = NavyPrimary) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -175,15 +172,10 @@ fun LoginScreen(
                     }
                 },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = NavyPrimary,
-                    unfocusedTextColor = NavyPrimary,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = CardBorder,
-                    cursorColor = AccentBlue
-                ),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -260,8 +252,14 @@ fun LoginScreen(
                 onClick = {
                     coroutineScope.launch {
                         try {
+                            val webClientId = context.getString(R.string.default_web_client_id).trim()
+                            if (webClientId.isBlank() || webClientId.startsWith("YOUR_GOOGLE_WEB_CLIENT_ID")) {
+                                validationError = "Google Sign-In requires configuring your Google Web Client ID in strings.xml (from Google Cloud Console). Please sign in using your email and password."
+                                return@launch
+                            }
+
                             val googleIdOption = GetSignInWithGoogleOption.Builder(
-                                serverClientId = "careerconnect-android"
+                                serverClientId = webClientId
                             )
                                 .build()
 
@@ -282,13 +280,15 @@ fun LoginScreen(
                                     fullName = googleIdTokenCredential.displayName,
                                     idToken = googleIdTokenCredential.idToken
                                 )
+                            } else {
+                                validationError = "Unable to extract Google credentials from selection."
                             }
                         } catch (e: GetCredentialCancellationException) {
                             // User dismissed the Google account selector bottom sheet; do not show error
                         } catch (e: NoCredentialException) {
-                            validationError = "No eligible Google accounts found on device."
+                            validationError = "No eligible Google accounts found on this device."
                         } catch (e: Exception) {
-                            validationError = e.localizedMessage ?: "Google Sign-In failed. Please try again."
+                            validationError = "Google Sign-In error: ${e.localizedMessage ?: e.message ?: "Authentication failed."}"
                         }
                     }
                 },
