@@ -22,12 +22,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 import com.careerconnect.app.R
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.AuthUiState
@@ -44,8 +53,10 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
-    var showGoogleDialog by remember { mutableStateOf(false) }
-    var googleEmailInput by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val credentialManager = remember { CredentialManager.create(context) }
 
     val uiState by authViewModel.uiState.collectAsState()
 
@@ -244,9 +255,44 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Real Google Sign-In Option
+            // Native Google Sign-In via Android Credential Manager
             OutlinedButton(
-                onClick = { showGoogleDialog = true },
+                onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val googleIdOption = GetSignInWithGoogleOption.Builder(
+                                serverClientId = "careerconnect-android"
+                            )
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            val result = credentialManager.getCredential(
+                                request = request,
+                                context = context
+                            )
+
+                            val credential = result.credential
+                            if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                authViewModel.loginWithGoogle(
+                                    email = googleIdTokenCredential.id,
+                                    fullName = googleIdTokenCredential.displayName,
+                                    idToken = googleIdTokenCredential.idToken
+                                )
+                            }
+                        } catch (e: GetCredentialCancellationException) {
+                            // User dismissed the Google account selector bottom sheet; do not show error
+                        } catch (e: NoCredentialException) {
+                            validationError = "No eligible Google accounts found on device."
+                        } catch (e: Exception) {
+                            validationError = e.localizedMessage ?: "Google Sign-In failed. Please try again."
+                        }
+                    }
+                },
+                enabled = uiState !is AuthUiState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -286,53 +332,6 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // Google Sign-In Dialog
-        if (showGoogleDialog) {
-            AlertDialog(
-                onDismissRequest = { showGoogleDialog = false },
-                title = {
-                    Text("Sign in with Google", color = NavyPrimary, fontWeight = FontWeight.Bold)
-                },
-                text = {
-                    Column {
-                        Text(
-                            "Enter your Google Account email to authenticate directly through CareerConnect cloud OAuth services:",
-                            fontSize = 13.sp,
-                            color = TextSecondaryLight
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = googleEmailInput,
-                            onValueChange = { googleEmailInput = it },
-                            label = { Text("Google Email") },
-                            placeholder = { Text("you@gmail.com") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (Patterns.EMAIL_ADDRESS.matcher(googleEmailInput.trim()).matches()) {
-                                showGoogleDialog = false
-                                authViewModel.loginWithGoogle(googleEmailInput.trim())
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue, contentColor = Color.White)
-                    ) {
-                        Text("Continue", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showGoogleDialog = false }) {
-                        Text("Cancel", color = TextSecondaryLight)
-                    }
-                }
-            )
         }
     }
 }

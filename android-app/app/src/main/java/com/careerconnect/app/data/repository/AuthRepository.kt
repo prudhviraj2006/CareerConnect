@@ -122,35 +122,12 @@ class AuthRepository(
                 preferencesDataStore.setOnboardingCompleted(true)
                 Result.success(token)
             } else {
-                val errorMsg = response.errorBody()?.string() ?: "Google authentication failed"
+                val rawError = response.errorBody()?.string()
+                val errorMsg = extractErrorMessage(rawError, "Google authentication failed.")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            val cleanEmail = email.trim().lowercase()
-            val cleanName = fullName?.trim() ?: cleanEmail.substringBefore("@").replace(".", " ").split(" ")
-                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
-            val token = TokenResponse(
-                accessToken = "google_auth_${System.currentTimeMillis()}",
-                tokenType = "bearer",
-                refreshToken = "google_refresh_${System.currentTimeMillis()}",
-                user = UserDto(
-                    id = 1,
-                    email = cleanEmail,
-                    fullName = cleanName,
-                    phoneNumber = null,
-                    isActive = true,
-                    isVerified = true
-                )
-            )
-            preferencesDataStore.saveAuthTokens(
-                accessToken = token.accessToken,
-                refreshToken = token.refreshToken,
-                userId = token.user.id,
-                email = token.user.email,
-                name = token.user.fullName
-            )
-            preferencesDataStore.setOnboardingCompleted(true)
-            Result.success(token)
+            Result.failure(e)
         }
     }
 

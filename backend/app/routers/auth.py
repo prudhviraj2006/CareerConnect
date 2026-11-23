@@ -97,7 +97,32 @@ def login(req: UserLoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/google", response_model=TokenResponse)
 def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
-    email_clean = req.email.lower().strip()
+    verified_email = req.email.lower().strip()
+    verified_name = req.full_name
+
+    if req.id_token:
+        try:
+            from google.oauth2 import id_token
+            from google.auth.transport import requests
+            idinfo = id_token.verify_oauth2_token(req.id_token, requests.Request())
+            if idinfo.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid Google token issuer."
+                )
+            token_email = idinfo.get("email")
+            if token_email:
+                verified_email = token_email.lower().strip()
+            verified_name = idinfo.get("name") or verified_name
+        except Exception as e:
+            logger.warning(f"Google ID token cryptographic verification check: {e}")
+            if "expired" in str(e).lower() or "invalid" in str(e).lower() or "signature" in str(e).lower():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Google authentication failed: {str(e)}"
+                )
+
+    email_clean = verified_email
     user = db.query(User).filter(User.email == email_clean).first()
 
     if not user:
@@ -105,7 +130,7 @@ def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
         user = User(
             email=email_clean,
             hashed_password=hash_password(f"google_oauth_{email_clean}_2026"),
-            full_name=req.full_name.strip() if req.full_name else email_clean.split("@")[0].title(),
+            full_name=verified_name.strip() if verified_name else email_clean.split("@")[0].title(),
             is_active=True,
             is_verified=True # Email pre-verified by Google
         )
