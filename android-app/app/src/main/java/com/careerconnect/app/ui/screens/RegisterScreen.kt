@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careerconnect.app.R
+import com.careerconnect.app.ui.components.careerConnectTextFieldColors
+import com.careerconnect.app.ui.components.careerConnectTextStyle
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.AuthUiState
 import com.careerconnect.app.ui.viewmodels.AuthViewModel
@@ -109,8 +111,11 @@ fun RegisterScreen(
                     validationError = null
                 },
                 label = { Text("Full Name") },
+                placeholder = { Text("Enter your full name") },
                 leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 isError = fullNameError != null,
                 supportingText = fullNameError?.let { { Text(it, color = MatchLow) } },
                 modifier = Modifier.fillMaxWidth(),
@@ -128,8 +133,11 @@ fun RegisterScreen(
                     validationError = null
                 },
                 label = { Text("Email Address") },
+                placeholder = { Text("name@example.com") },
                 leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = emailError != null,
                 supportingText = emailError?.let { { Text(it, color = MatchLow) } },
@@ -144,8 +152,11 @@ fun RegisterScreen(
                 value = phone,
                 onValueChange = { phone = it },
                 label = { Text("Phone Number (Optional)") },
+                placeholder = { Text("+91 9876543210") },
                 leadingIcon = { Icon(Icons.Outlined.Phone, contentDescription = null) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -162,16 +173,19 @@ fun RegisterScreen(
                     validationError = null
                 },
                 label = { Text("Password (Min 6 characters)") },
+                placeholder = { Text("Enter a secure password") },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = null
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
                         )
                     }
                 },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 isError = passwordError != null,
@@ -191,8 +205,11 @@ fun RegisterScreen(
                     validationError = null
                 },
                 label = { Text("Confirm Password") },
+                placeholder = { Text("Re-enter your password") },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 isError = confirmPasswordError != null,
@@ -205,6 +222,11 @@ fun RegisterScreen(
 
             // Error display placed directly above Create Account button
             val activeError = validationError ?: (uiState as? AuthUiState.Error)?.message
+            LaunchedEffect(activeError) {
+                if (activeError != null) {
+                    scrollState.animateScrollTo(scrollState.maxValue)
+                }
+            }
             if (activeError != null) {
                 Surface(
                     color = Color(0xFFFEE2E2),

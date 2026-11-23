@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -405,3 +407,56 @@ fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
         }
     }
 }
+
+/**
+ * Standardized High-Contrast Text Field Colors ensuring pure black (#000000) input text,
+ * clearly visible borders, distinct focused states, and accessible placeholder & label text.
+ */
+@Composable
+fun careerConnectTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color(0xFF000000),
+    unfocusedTextColor = Color(0xFF000000),
+    disabledTextColor = Color(0xFF64748B),
+    errorTextColor = Color(0xFFB91C1C),
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    disabledContainerColor = Color(0xFFF8FAFC),
+    errorContainerColor = Color.White,
+    cursorColor = AccentBlue,
+    errorCursorColor = Color(0xFFEF4444),
+    selectionColors = TextSelectionColors(
+        handleColor = AccentBlue,
+        backgroundColor = Color(0xFFBFDBFE)
+    ),
+    focusedBorderColor = AccentBlue,
+    unfocusedBorderColor = Color(0xFF94A3B8),
+    disabledBorderColor = Color(0xFFE2E8F0),
+    errorBorderColor = Color(0xFFEF4444),
+    focusedLabelColor = AccentBlue,
+    unfocusedLabelColor = NavyPrimary,
+    disabledLabelColor = Color(0xFF94A3B8),
+    errorLabelColor = Color(0xFFDC2626),
+    focusedPlaceholderColor = Color(0xFF64748B),
+    unfocusedPlaceholderColor = Color(0xFF64748B),
+    disabledPlaceholderColor = Color(0xFF94A3B8),
+    errorPlaceholderColor = Color(0xFF64748B),
+    focusedLeadingIconColor = AccentBlue,
+    unfocusedLeadingIconColor = Color(0xFF64748B),
+    disabledLeadingIconColor = Color(0xFF94A3B8),
+    errorLeadingIconColor = Color(0xFFDC2626),
+    focusedTrailingIconColor = AccentBlue,
+    unfocusedTrailingIconColor = Color(0xFF64748B),
+    disabledTrailingIconColor = Color(0xFF94A3B8),
+    errorTrailingIconColor = Color(0xFFDC2626)
+)
+
+/**
+ * Standardized High-Contrast Text Style ensuring pure black (#000000) input typography.
+ */
+@Composable
+fun careerConnectTextStyle() = TextStyle(
+    color = Color(0xFF000000),
+    fontSize = 15.sp,
+    fontWeight = FontWeight.Normal
+)
+

@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import com.careerconnect.app.data.models.UserProfileUpdateDto
 import com.careerconnect.app.data.utils.IndiaLocations
 import com.careerconnect.app.ui.components.CareerConnectTopBar
+import com.careerconnect.app.ui.components.careerConnectTextFieldColors
+import com.careerconnect.app.ui.components.careerConnectTextStyle
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.ProfileViewModel
 
@@ -98,6 +100,8 @@ fun EditProfileScreen(
                 onValueChange = { fullName = it },
                 label = { Text("Full Name", color = NavyPrimary) },
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -111,6 +115,8 @@ fun EditProfileScreen(
                 placeholder = { Text("+91 9876543210") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -125,6 +131,8 @@ fun EditProfileScreen(
                 onValueChange = { university = it },
                 label = { Text("College / University", color = NavyPrimary) },
                 placeholder = { Text("e.g. IIT Delhi, Anna University") },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -137,6 +145,8 @@ fun EditProfileScreen(
                     onValueChange = { degree = it },
                     label = { Text("Degree", color = NavyPrimary) },
                     placeholder = { Text("B.Tech") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1.2f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -150,6 +160,8 @@ fun EditProfileScreen(
                     label = { Text("Grad Year", color = NavyPrimary) },
                     placeholder = { Text("2025") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(0.8f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -162,6 +174,8 @@ fun EditProfileScreen(
                 onValueChange = { specialization = it },
                 label = { Text("Specialization", color = NavyPrimary) },
                 placeholder = { Text("Computer Science, ECE, Mechanical") },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -178,6 +192,8 @@ fun EditProfileScreen(
                     label = { Text("Add Skill", color = NavyPrimary) },
                     placeholder = { Text("e.g. Kotlin, Python, SQL") },
                     singleLine = true,
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -227,6 +243,8 @@ fun EditProfileScreen(
                 onValueChange = { expYearsText = it },
                 label = { Text("Experience Years (0 for Fresher)", color = NavyPrimary) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -237,6 +255,8 @@ fun EditProfileScreen(
                 value = preferredRole,
                 onValueChange = { preferredRole = it },
                 label = { Text("Preferred Job Role", color = NavyPrimary) },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -247,6 +267,8 @@ fun EditProfileScreen(
                 value = preferredLocation,
                 onValueChange = { preferredLocation = it },
                 label = { Text("Preferred Location in India", color = NavyPrimary) },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -257,6 +279,8 @@ fun EditProfileScreen(
                 value = expectedSalary,
                 onValueChange = { expectedSalary = it },
                 label = { Text("Expected Salary in INR (e.g. ₹6 LPA)", color = NavyPrimary) },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )

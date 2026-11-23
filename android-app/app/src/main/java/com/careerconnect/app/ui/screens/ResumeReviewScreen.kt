@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careerconnect.app.data.models.UserProfileUpdateDto
 import com.careerconnect.app.ui.components.CareerConnectTopBar
+import com.careerconnect.app.ui.components.careerConnectTextFieldColors
+import com.careerconnect.app.ui.components.careerConnectTextStyle
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.ResumeUiState
 import com.careerconnect.app.ui.viewmodels.ResumeViewModel
@@ -117,6 +119,8 @@ fun ResumeReviewScreen(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Candidate Full Name") },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -129,6 +133,8 @@ fun ResumeReviewScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email Address") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -136,6 +142,8 @@ fun ResumeReviewScreen(
                     value = phone,
                     onValueChange = { phone = it },
                     label = { Text("Phone Number") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -148,6 +156,8 @@ fun ResumeReviewScreen(
                 value = university,
                 onValueChange = { university = it },
                 label = { Text("College / University") },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -160,6 +170,8 @@ fun ResumeReviewScreen(
                     value = degree,
                     onValueChange = { degree = it },
                     label = { Text("Degree") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -167,6 +179,8 @@ fun ResumeReviewScreen(
                     value = gradYearText,
                     onValueChange = { gradYearText = it },
                     label = { Text("Grad Year") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -188,6 +202,8 @@ fun ResumeReviewScreen(
                     value = newTechSkill,
                     onValueChange = { newTechSkill = it },
                     label = { Text("Add / Correct Technical Skill") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -241,6 +257,8 @@ fun ResumeReviewScreen(
                     value = newSoftSkill,
                     onValueChange = { newSoftSkill = it },
                     label = { Text("Add Soft Skill") },
+                    textStyle = careerConnectTextStyle(),
+                    colors = careerConnectTextFieldColors(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -285,6 +303,8 @@ fun ResumeReviewScreen(
                 value = expYearsText,
                 onValueChange = { expYearsText = it },
                 label = { Text("Estimated Years of Experience") },
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -296,6 +316,8 @@ fun ResumeReviewScreen(
                 onValueChange = { expSummary = it },
                 label = { Text("Work Experience Summary") },
                 maxLines = 4,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -308,6 +330,8 @@ fun ResumeReviewScreen(
                 onValueChange = { internships = it },
                 label = { Text("Internship Experience") },
                 maxLines = 3,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -320,6 +344,8 @@ fun ResumeReviewScreen(
                 onValueChange = { projects = it },
                 label = { Text("Projects (Title, Tech Stack & Summary)") },
                 maxLines = 4,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -332,6 +358,8 @@ fun ResumeReviewScreen(
                 onValueChange = { certifications = it },
                 label = { Text("Certifications & Courses") },
                 maxLines = 3,
+                textStyle = careerConnectTextStyle(),
+                colors = careerConnectTextFieldColors(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
