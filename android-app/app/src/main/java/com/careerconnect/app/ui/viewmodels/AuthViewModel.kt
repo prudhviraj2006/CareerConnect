@@ -65,18 +65,6 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun loginStandalone(userEmail: String? = null, userName: String? = null) {
-        viewModelScope.launch {
-            _uiState.value = AuthUiState.Loading
-            val result = authRepository.loginStandalone(userEmail, userName)
-            result.onSuccess {
-                _uiState.value = AuthUiState.Success(it)
-            }.onFailure {
-                _uiState.value = AuthUiState.Error(it.message ?: "Failed to enter standalone mode.")
-            }
-        }
-    }
-
     fun forgotPassword(email: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading

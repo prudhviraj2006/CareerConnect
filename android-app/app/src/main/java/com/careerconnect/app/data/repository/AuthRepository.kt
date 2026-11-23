@@ -154,34 +154,6 @@ class AuthRepository(
         }
     }
 
-    suspend fun loginStandalone(userEmail: String? = null, userName: String? = null): Result<TokenResponse> {
-        val email = userEmail?.trim()?.takeIf { it.isNotBlank() } ?: "candidate@careerconnect.in"
-        val name = userName?.trim()?.takeIf { it.isNotBlank() } ?: "Registered Candidate"
-        val standaloneUser = UserDto(
-            id = 1,
-            email = email,
-            fullName = name,
-            phoneNumber = null,
-            isActive = true,
-            isVerified = false
-        )
-        val token = TokenResponse(
-            accessToken = "standalone_session_${System.currentTimeMillis()}",
-            tokenType = "bearer",
-            refreshToken = "standalone_refresh_${System.currentTimeMillis()}",
-            user = standaloneUser
-        )
-        preferencesDataStore.saveAuthTokens(
-            accessToken = token.accessToken,
-            refreshToken = token.refreshToken,
-            userId = token.user.id,
-            email = token.user.email,
-            name = token.user.fullName
-        )
-        preferencesDataStore.setOnboardingCompleted(true)
-        return Result.success(token)
-    }
-
     suspend fun setOnboardingCompleted() {
         preferencesDataStore.setOnboardingCompleted(true)
     }

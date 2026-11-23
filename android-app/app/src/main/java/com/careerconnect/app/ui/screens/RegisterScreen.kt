@@ -283,33 +283,7 @@ fun RegisterScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Direct Standalone Mode (No Laptop/Server required)
-            OutlinedButton(
-                onClick = { authViewModel.loginStandalone() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, AccentBlue)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PhoneAndroid,
-                    contentDescription = null,
-                    tint = AccentBlue,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Run on Phone (No Laptop Required)",
-                    color = AccentBlue,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "Already have an account? ", color = TextSecondaryLight)
