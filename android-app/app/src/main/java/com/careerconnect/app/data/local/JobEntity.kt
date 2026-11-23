@@ -19,5 +19,6 @@ data class JobEntity(
     val sourceName: String?,
     val requiredSkills: String, // comma-separated
     val matchScore: Float?,
-    val description: String?
+    val description: String?,
+    val isIndia: Boolean = false
 )

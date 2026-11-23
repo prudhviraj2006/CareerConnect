@@ -133,6 +133,7 @@ class Job(Base):
     publication_date = Column(DateTime, nullable=True)
     original_url = Column(String(1000), nullable=False)
     is_remote = Column(Boolean, default=False)
+    is_india = Column(Boolean, default=False, index=True)
     is_active = Column(Boolean, default=True) # For tracking expired or removed jobs
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)

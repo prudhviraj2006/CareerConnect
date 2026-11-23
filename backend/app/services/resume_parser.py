@@ -23,6 +23,12 @@ SOFT_SKILLS_CATALOG = {
     "conflict resolution", "creativity", "decision making", "presentation", "mentoring"
 }
 
+INDIAN_LOCATIONS = [
+    "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "new delhi", "noida",
+    "gurugram", "gurgaon", "chennai", "kolkata", "ahmedabad", "jaipur", "kochi", "coimbatore",
+    "chandigarh", "indore", "surat", "bhopal", "nagpur", "visakhapatnam", "lucknow", "thiruvananthapuram"
+]
+
 # Synonyms and Normalization Map
 SKILL_SYNONYMS = {
     "android development": "android",

@@ -47,6 +47,7 @@ def serialize_job(job: Job, user_id: Optional[int] = None, db: Optional[Session]
         "publication_date": job.publication_date,
         "original_url": job.original_url,
         "is_remote": job.is_remote,
+        "is_india": bool(job.is_india) if hasattr(job, "is_india") and job.is_india is not None else False,
         "is_active": job.is_active,
         "source_name": source_name,
         "required_skills": skills,
@@ -62,6 +63,7 @@ def get_jobs(
     experience_level: Optional[str] = None,
     employment_type: Optional[str] = None,
     is_remote: Optional[bool] = None,
+    india_only: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Job).filter(Job.is_active == True)
@@ -74,11 +76,14 @@ def get_jobs(
         query = query.filter(Job.employment_type.ilike(f"%{employment_type}%"))
     if is_remote is not None:
         query = query.filter(Job.is_remote == is_remote)
+    if india_only is True:
+        query = query.filter(Job.is_india == True)
 
+    # India-first prioritization: Indian / India-eligible jobs appear first
     if sort_by == "date":
-        query = query.order_by(Job.publication_date.desc(), Job.id.desc())
+        query = query.order_by(Job.is_india.desc(), Job.publication_date.desc(), Job.id.desc())
     else:
-        query = query.order_by(Job.id.desc())
+        query = query.order_by(Job.is_india.desc(), Job.id.desc())
 
     offset = (page - 1) * limit
     jobs = query.offset(offset).limit(limit).all()
@@ -93,6 +98,7 @@ def search_jobs(
     location: Optional[str] = None,
     employment_type: Optional[str] = None,
     is_remote: Optional[bool] = None,
+    india_only: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Job).filter(Job.is_active == True)
@@ -117,8 +123,10 @@ def search_jobs(
         query = query.filter(Job.employment_type.ilike(f"%{employment_type}%"))
     if is_remote is not None:
         query = query.filter(Job.is_remote == is_remote)
+    if india_only is True:
+        query = query.filter(Job.is_india == True)
 
-    query = query.order_by(Job.publication_date.desc(), Job.id.desc())
+    query = query.order_by(Job.is_india.desc(), Job.publication_date.desc(), Job.id.desc())
     offset = (page - 1) * limit
     jobs = query.offset(offset).limit(limit).all()
 

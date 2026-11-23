@@ -110,6 +110,7 @@ fun MatchScoreBadge(score: Float?, hasSufficientInfo: Boolean = true) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun JobCard(
     job: JobDto,
@@ -192,17 +193,26 @@ fun JobCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Metadata Chips
-            Row(
+            // Responsive Metadata Chips using FlowRow to prevent clipping
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                if (job.isIndia) {
+                    MetadataChip(icon = Icons.Outlined.CheckCircle, text = "India Focus")
+                }
                 job.location?.let {
                     MetadataChip(icon = Icons.Outlined.LocationOn, text = it)
                 }
                 job.employmentType?.let {
                     MetadataChip(icon = Icons.Outlined.WorkOutline, text = it)
+                }
+                job.experienceLevel?.let {
+                    MetadataChip(icon = Icons.Outlined.School, text = it)
+                }
+                if (job.isRemote) {
+                    MetadataChip(icon = Icons.Outlined.Computer, text = "Remote")
                 }
             }
 

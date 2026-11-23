@@ -29,6 +29,7 @@ import com.careerconnect.app.data.models.JobDto
 import com.careerconnect.app.ui.components.EmptyStateView
 import com.careerconnect.app.ui.components.JobCard
 import com.careerconnect.app.ui.components.MatchScoreBadge
+import com.careerconnect.app.ui.components.MetadataChip
 import com.careerconnect.app.ui.theme.*
 import com.careerconnect.app.ui.viewmodels.JobViewModel
 import com.careerconnect.app.ui.viewmodels.MatchViewModel
@@ -298,6 +299,7 @@ fun StatCard(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RecommendedJobItem(
     job: JobDto,
@@ -346,6 +348,19 @@ fun RecommendedJobItem(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                job.location?.let {
+                    MetadataChip(icon = Icons.Outlined.LocationOn, text = it)
+                }
+                job.employmentType?.let {
+                    MetadataChip(icon = Icons.Outlined.WorkOutline, text = it)
+                }
+            }
         }
     }
 }

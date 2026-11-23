@@ -16,6 +16,7 @@ data class JobDto(
     @SerializedName("publication_date") val publicationDate: String? = null,
     @SerializedName("original_url") val originalUrl: String,
     @SerializedName("is_remote") val isRemote: Boolean = false,
+    @SerializedName("is_india") val isIndia: Boolean = false,
     @SerializedName("is_active") val isActive: Boolean = true,
     @SerializedName("source_name") val sourceName: String? = "Direct Provider",
     @SerializedName("required_skills") val requiredSkills: List<String> = emptyList(),

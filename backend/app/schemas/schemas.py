@@ -166,6 +166,7 @@ class JobResponse(BaseModel):
     publication_date: Optional[datetime] = None
     original_url: str
     is_remote: bool
+    is_india: bool = False
     is_active: bool
     source_name: Optional[str] = "Direct Provider"
     required_skills: List[str] = []

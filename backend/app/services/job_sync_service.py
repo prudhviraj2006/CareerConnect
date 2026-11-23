@@ -2,14 +2,14 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from bs4 import BeautifulSoup
 import re
 
 from backend.app.config import settings
-from backend.app.models.all_models import Job, JobSource, JobRequiredSkill
-from backend.app.services.resume_parser import TECHNICAL_SKILLS_CATALOG, normalize_skill
+from backend.app.models.all_models import Job, JobSource, JobRequiredSkill, utcnow
+from backend.app.services.resume_parser import TECHNICAL_SKILLS_CATALOG, normalize_skill, INDIAN_LOCATIONS
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,77 @@ def extract_skills_from_text_and_tags(text: str, tags: List[str]) -> List[str]:
             skills_found.add(cat_skill)
 
     return sorted(list(skills_found))
+
+INDIAN_CITY_KEYWORDS = {loc.lower() for loc in INDIAN_LOCATIONS}.union({
+    "india", "bharat", "delhi ncr", "delhi-ncr", "bangalore", "bengaluru", "mumbai", "hyderabad",
+    "pune", "chennai", "kolkata", "noida", "gurugram", "gurgaon", "ahmedabad", "jaipur"
+})
+
+def classify_experience_and_employment(title: str, description: str, raw_job_type: Optional[str] = None) -> Dict[str, Any]:
+    """Classifies employment type and experience requirements for freshers, interns and seniors."""
+    title_lower = title.lower()
+    desc_lower = (description or "").lower()
+
+    # 1. Internship / Trainee detection
+    if any(k in title_lower for k in ["intern", "internship", "apprentice", "trainee"]) or \
+       (raw_job_type and "intern" in raw_job_type.lower()):
+        return {
+            "employment_type": "Internship",
+            "experience_level": "Internship",
+            "experience_years_required": 0.0
+        }
+
+    # 2. Fresher / Entry-Level detection
+    if any(k in title_lower for k in ["fresher", "entry level", "entry-level", "junior", "graduate", "associate", "0-1 year"]):
+        emp = raw_job_type.replace("_", " ").title() if raw_job_type else "Full-time"
+        return {
+            "employment_type": emp,
+            "experience_level": "Entry-level",
+            "experience_years_required": 0.0
+        }
+
+    # 3. Senior / Lead detection
+    if any(k in title_lower for k in ["senior", "lead", "staff", "principal", "architect", "director", "head of", "manager"]):
+        emp = raw_job_type.replace("_", " ").title() if raw_job_type else "Full-time"
+        return {
+            "employment_type": emp,
+            "experience_level": "Senior",
+            "experience_years_required": 4.0
+        }
+
+    # 4. Default: Mid-level
+    emp = raw_job_type.replace("_", " ").title() if raw_job_type else "Full-time"
+    return {
+        "employment_type": emp,
+        "experience_level": "Mid-level",
+        "experience_years_required": 2.0
+    }
+
+def check_india_eligibility(location: str, candidate_req_loc: str = "") -> (bool, str):
+    """
+    Determines whether a job is based in India or open to Indian applicants.
+    Returns (is_india, display_location).
+    """
+    combined = f"{location} {candidate_req_loc}".lower()
+
+    # Direct Indian location match
+    if any(k in combined for k in INDIAN_CITY_KEYWORDS):
+        loc_display = location.strip() if location else "India"
+        if "india" not in loc_display.lower() and not any(k in loc_display.lower() for k in ["remote", "worldwide"]):
+            loc_display = f"{loc_display}, India"
+        return True, loc_display
+
+    # Worldwide / Anywhere Remote match (accessible from India)
+    if any(k in combined for k in ["worldwide", "anywhere", "global"]):
+        return True, "Remote (Worldwide / India Eligible)"
+
+    # Specific non-Indian restrictions (e.g., USA only, UK, Germany, EMEA)
+    if candidate_req_loc:
+        return False, f"{candidate_req_loc.strip()} (International)"
+    elif location:
+        return False, f"{location.strip()} (International)"
+
+    return False, "International"
 
 class BaseJobProvider(ABC):
     name: str
@@ -86,21 +157,29 @@ class RemotiveJobProvider(BaseJobProvider):
                         except Exception:
                             pub_date = None
 
+                    title_str = item.get("title", "Untitled Position").strip()
+                    cand_req_loc = item.get("candidate_required_location") or ""
+                    is_india_eligible, loc_display = check_india_eligibility("", cand_req_loc)
+
+                    # Authentic classification of role & experience level
+                    role_info = classify_experience_and_employment(title_str, desc_clean, item.get("job_type"))
+
                     normalized_jobs.append({
                         "external_id": str(item.get("id")),
-                        "title": item.get("title", "Untitled Position").strip(),
+                        "title": title_str,
                         "company_name": item.get("company_name", "Undisclosed Company").strip(),
                         "company_logo": item.get("company_logo_url") or item.get("company_logo"),
-                        "location": item.get("candidate_required_location") or "Worldwide / Remote",
-                        "employment_type": item.get("job_type", "Full-time").replace("_", " ").title(),
-                        "experience_level": "Mid-level" if "senior" not in item.get("title", "").lower() else "Senior",
-                        "experience_years_required": 3.0 if "senior" in item.get("title", "").lower() else 1.0,
+                        "location": loc_display,
+                        "employment_type": role_info["employment_type"],
+                        "experience_level": role_info["experience_level"],
+                        "experience_years_required": role_info["experience_years_required"],
                         "min_education": "Bachelor's Degree",
                         "description": desc_clean[:4000] if desc_clean else "No description provided by source.",
                         "salary": item.get("salary") or None,
                         "publication_date": pub_date,
                         "original_url": item.get("url", ""),
                         "is_remote": True,
+                        "is_india": is_india_eligible,
                         "required_skills": extracted_skills
                     })
         except Exception as e:
@@ -135,30 +214,37 @@ class ArbeitnowJobProvider(BaseJobProvider):
                         try:
                             # Arbeitnow created_at is unix epoch int or string
                             if isinstance(item["created_at"], (int, float)):
-                                pub_date = datetime.fromtimestamp(item["created_at"])
+                                pub_date = datetime.fromtimestamp(item["created_at"], tz=timezone.utc)
                             else:
                                 pub_date = datetime.fromisoformat(str(item["created_at"]))
                         except Exception:
                             pub_date = None
 
+                    title_str = item.get("title", "Untitled Position").strip()
+                    raw_loc = item.get("location") or ""
+                    is_remote = bool(item.get("remote"))
+                    is_india_eligible, loc_display = check_india_eligibility(raw_loc, "Worldwide" if is_remote and not raw_loc else "")
+
                     job_types = item.get("job_types", [])
-                    emp_type = job_types[0] if job_types else "Full-time"
+                    raw_type = job_types[0] if job_types else None
+                    role_info = classify_experience_and_employment(title_str, desc_clean, raw_type)
 
                     normalized_jobs.append({
                         "external_id": str(item.get("slug")),
-                        "title": item.get("title", "Untitled Position").strip(),
+                        "title": title_str,
                         "company_name": item.get("company_name", "Undisclosed Company").strip(),
                         "company_logo": None,
-                        "location": item.get("location") or ("Remote" if item.get("remote") else "Undisclosed"),
-                        "employment_type": emp_type.capitalize(),
-                        "experience_level": "Senior" if "senior" in item.get("title", "").lower() else "Mid-level",
-                        "experience_years_required": 4.0 if "senior" in item.get("title", "").lower() else 2.0,
+                        "location": loc_display,
+                        "employment_type": role_info["employment_type"],
+                        "experience_level": role_info["experience_level"],
+                        "experience_years_required": role_info["experience_years_required"],
                         "min_education": "Bachelor's Degree",
                         "description": desc_clean[:4000] if desc_clean else "No description provided by source.",
                         "salary": None,
                         "publication_date": pub_date,
                         "original_url": item.get("url", ""),
-                        "is_remote": bool(item.get("remote")),
+                        "is_remote": is_remote,
+                        "is_india": is_india_eligible,
                         "required_skills": extracted_skills
                     })
         except Exception as e:
@@ -207,21 +293,26 @@ class AdzunaJobProvider(BaseJobProvider):
                             else:
                                 salary_str = f"${salary_min:,.0f} - ${salary_max:,.0f}" if salary_max else f"${salary_min:,.0f}"
 
+                        title_str = item.get("title", "").strip()
+                        role_info = classify_experience_and_employment(title_str, desc, item.get("contract_type"))
+                        is_india_eligible, loc_display = check_india_eligibility(location_name, "India" if settings.ADZUNA_COUNTRY == "in" else "")
+
                         normalized_jobs.append({
                             "external_id": str(item.get("id")),
-                            "title": item.get("title", "").strip(),
+                            "title": title_str,
                             "company_name": item.get("company", {}).get("display_name", "Employer").strip(),
                             "company_logo": None,
-                            "location": location_name,
-                            "employment_type": item.get("contract_type", "Full-time").capitalize(),
-                            "experience_level": "Mid-level",
-                            "experience_years_required": 2.0,
+                            "location": loc_display,
+                            "employment_type": role_info["employment_type"],
+                            "experience_level": role_info["experience_level"],
+                            "experience_years_required": role_info["experience_years_required"],
                             "min_education": "Bachelor's Degree",
                             "description": desc[:4000],
                             "salary": salary_str,
                             "publication_date": datetime.fromisoformat(item["created"]) if item.get("created") else None,
                             "original_url": item.get("redirect_url", ""),
-                            "is_remote": "remote" in desc.lower() or "remote" in item.get("title", "").lower(),
+                            "is_remote": "remote" in desc.lower() or "remote" in title_str.lower(),
+                            "is_india": is_india_eligible,
                             "required_skills": skills
                         })
         except Exception as e:
@@ -285,6 +376,7 @@ class JobSyncService:
                         existing_job.description = item["description"]
                         existing_job.salary = item["salary"]
                         existing_job.is_remote = item["is_remote"]
+                        existing_job.is_india = item.get("is_india", False)
                         existing_job.is_active = True
                         existing_job.original_url = item["original_url"]
                         summary["jobs_updated"] += 1
@@ -306,6 +398,7 @@ class JobSyncService:
                             publication_date=item["publication_date"],
                             original_url=item["original_url"],
                             is_remote=item["is_remote"],
+                            is_india=item.get("is_india", False),
                             is_active=True
                         )
                         db.add(db_job)
@@ -328,7 +421,7 @@ class JobSyncService:
                             )
                             db.add(db_skill)
 
-                source.last_synced_at = datetime.utcnow()
+                source.last_synced_at = utcnow()
                 db.commit()
             except Exception as e:
                 db.rollback()
