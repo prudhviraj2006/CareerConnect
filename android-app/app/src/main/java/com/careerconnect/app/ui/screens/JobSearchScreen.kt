@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,14 +34,14 @@ fun JobSearchScreen(
     onNavigateToFilters: () -> Unit,
     onNavigateToJobDetails: (Int) -> Unit
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val searchResults by jobViewModel.searchResults.collectAsState()
     val allJobs by jobViewModel.jobs.collectAsState()
     val savedIds by jobViewModel.savedJobIds.collectAsState()
     val isLoading by jobViewModel.isLoading.collectAsState()
     val filterState by jobViewModel.filterState.collectAsState()
 
-    var activeCityChip by remember { mutableStateOf("All India") }
+    var activeCityChip by rememberSaveable { mutableStateOf("All India") }
 
     val quickChips = listOf(
         "All India",
