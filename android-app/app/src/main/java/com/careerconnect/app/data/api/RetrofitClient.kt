@@ -13,7 +13,7 @@ object RetrofitClient {
     // Live Cloud Backend (HTTPS) hosted on Render.com
     private var customBaseUrl: String? = null
 
-    private const val DEFAULT_BASE_URL = "https://careerconnect-backend-cpki.onrender.com/"
+    private const val DEFAULT_BASE_URL = "https://careerconnect-backend-epki.onrender.com/"
 
     fun getBaseUrl(): String {
         return customBaseUrl ?: DEFAULT_BASE_URL

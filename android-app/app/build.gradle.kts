@@ -20,7 +20,7 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "BASE_URL", "\"https://careerconnect-backend-cpki.onrender.com/\"")
+        buildConfigField("String", "BASE_URL", "\"https://careerconnect-backend-epki.onrender.com/\"")
     }
 
     buildTypes {
