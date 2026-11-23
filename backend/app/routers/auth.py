@@ -1,6 +1,9 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 from backend.app.database import get_db
 from backend.app.models.all_models import User, UserProfile
@@ -29,46 +32,62 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(req: UserRegisterRequest, db: Session = Depends(get_db)):
-    # Check if email already registered
-    existing_user = db.query(User).filter(User.email == req.email.lower().strip()).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A user with this email address already exists."
+    try:
+        # Check if email already registered
+        existing_user = db.query(User).filter(User.email == req.email.lower().strip()).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this email address already exists."
+            )
+
+        user = User(
+            email=req.email.lower().strip(),
+            hashed_password=hash_password(req.password),
+            full_name=req.full_name.strip(),
+            phone_number=req.phone_number.strip() if req.phone_number else None,
+            is_active=True,
+            is_verified=False
         )
+        db.add(user)
+        db.flush()
 
-    user = User(
-        email=req.email.lower().strip(),
-        hashed_password=hash_password(req.password),
-        full_name=req.full_name.strip(),
-        phone_number=req.phone_number.strip() if req.phone_number else None,
-        is_active=True,
-        is_verified=False
-    )
-    db.add(user)
-    db.flush()
+        # Create empty user profile
+        profile = UserProfile(
+            user_id=user.id,
+            full_name=user.full_name,
+            email=user.email,
+            phone_number=user.phone_number,
+            is_confirmed_by_user=False
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(user)
 
-    # Create empty user profile
-    profile = UserProfile(
-        user_id=user.id,
-        full_name=user.full_name,
-        email=user.email,
-        phone_number=user.phone_number,
-        is_confirmed_by_user=False
-    )
-    db.add(profile)
-    db.commit()
-    db.refresh(user)
+        access_token = create_access_token({"sub": str(user.id), "email": user.email})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
 
-    access_token = create_access_token({"sub": str(user.id), "email": user.email})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user)
-    )
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            user=UserResponse.model_validate(user)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"Error during registration for {req.email}: {e}")
+        error_str = str(e).lower()
+        if "unique" in error_str or "duplicate" in error_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this email address already exists."
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 @router.post("/login", response_model=TokenResponse)
 def login(req: UserLoginRequest, db: Session = Depends(get_db)):

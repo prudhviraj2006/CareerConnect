@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.app.config import settings
-from backend.app.database import engine, Base, SessionLocal
+from backend.app.database import engine, Base, SessionLocal, run_schema_migrations
 from backend.app.models import all_models # ensure models are registered
 from backend.app.routers import (
     auth,
@@ -37,7 +37,9 @@ async def lifespan(app: FastAPI):
     # Startup: create tables
     logger.info("Initializing database tables...")
     Base.metadata.create_all(bind=engine)
-    logger.info("Database tables initialized successfully.")
+    logger.info("Database tables initialized successfully. Running schema migrations...")
+    run_schema_migrations(engine)
+    logger.info("Schema migrations verified successfully.")
 
     # Background initial job sync check
     db = SessionLocal()
