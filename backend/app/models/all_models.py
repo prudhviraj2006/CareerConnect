@@ -53,6 +53,8 @@ class UserProfile(Base):
     work_experience = Column(Text, nullable=True)
     experience_years = Column(Float, default=0.0)
     internship_experience = Column(Text, nullable=True)
+    projects = Column(Text, nullable=True)
+    certifications = Column(Text, nullable=True)
     preferred_job_role = Column(String(255), nullable=True)
     preferred_location = Column(String(255), nullable=True)
     expected_salary = Column(String(100), nullable=True)

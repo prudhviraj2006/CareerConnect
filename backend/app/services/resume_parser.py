@@ -164,22 +164,72 @@ class ResumeParserService:
         exp_match = re.search(r"(\d+(\.\d+)?)\+?\s*(?:years?|yrs?)(?:\s+of)?\s+experience", text_lower)
         experience_years = float(exp_match.group(1)) if exp_match else 0.0
 
-        # Summarize experience lines
-        exp_lines = []
-        is_in_exp_section = False
-        for line in lines:
-            if any(h in line.lower() for h in ["experience", "employment history", "work history", "internships"]):
-                is_in_exp_section = True
-                continue
-            if is_in_exp_section:
-                if any(h in line.lower() for h in ["education", "skills", "projects", "certifications", "interests"]):
-                    is_in_exp_section = False
-                else:
-                    exp_lines.append(line)
-                    if len(exp_lines) >= 8:
-                        break
+        # Section Extractor Helper
+        def extract_section_lines(header_keywords: List[str], stop_keywords: List[str], max_count: int = 8) -> List[str]:
+            found_lines = []
+            is_in_section = False
+            for line in lines:
+                l_lower = line.lower().strip()
+                if any(k in l_lower for k in header_keywords) and len(l_lower.split()) <= 5:
+                    is_in_section = True
+                    continue
+                if is_in_section:
+                    if any(s in l_lower for s in stop_keywords) and len(l_lower.split()) <= 5:
+                        is_in_section = False
+                    else:
+                        found_lines.append(line)
+                        if len(found_lines) >= max_count:
+                            break
+            return found_lines
 
-        experience_summary = "\n".join(exp_lines) if exp_lines else "Experience summary extracted from resume."
+        # Summarize work experience lines
+        exp_lines = extract_section_lines(
+            header_keywords=["work experience", "employment history", "professional experience"],
+            stop_keywords=["education", "skills", "projects", "certifications", "internship", "interests"]
+        )
+        if not exp_lines:
+            # Fallback general experience check
+            exp_lines = extract_section_lines(
+                header_keywords=["experience"],
+                stop_keywords=["education", "skills", "projects", "certifications", "interests"]
+            )
+        experience_summary = "\n".join(exp_lines) if exp_lines else None
+
+        # 5. Internship Experience Extraction
+        intern_lines = extract_section_lines(
+            header_keywords=["internship", "internships", "summer internship", "training"],
+            stop_keywords=["education", "skills", "projects", "certifications", "work experience", "interests"]
+        )
+        internship_experience = "\n".join(intern_lines) if intern_lines else None
+
+        # 6. Projects Extraction
+        proj_lines = extract_section_lines(
+            header_keywords=["projects", "academic projects", "key projects", "personal projects"],
+            stop_keywords=["education", "skills", "certifications", "experience", "internship", "interests"]
+        )
+        projects = "\n".join(proj_lines) if proj_lines else None
+
+        # 7. Certifications Extraction
+        cert_lines = extract_section_lines(
+            header_keywords=["certifications", "certificates", "licenses", "online courses", "credentials"],
+            stop_keywords=["education", "skills", "projects", "experience", "internship", "interests"]
+        )
+        certifications = "\n".join(cert_lines) if cert_lines else None
+
+        # 8. Location Detection (India-first check)
+        detected_location = None
+        common_cities = [
+            "bengaluru", "bangalore", "hyderabad", "pune", "mumbai", "delhi", "noida", "gurugram", "gurgaon",
+            "chennai", "kolkata", "ahmedabad", "jaipur", "kochi", "coimbatore", "chandigarh", "indore"
+        ]
+        for line in lines[:10]:
+            line_l = line.lower()
+            for city in common_cities:
+                if city in line_l:
+                    detected_location = city.title() + ", India"
+                    break
+            if detected_location:
+                break
 
         # Relevant keywords
         relevant_keywords = list(extracted_tech_skills.union(extracted_soft_skills))[:20]
@@ -197,6 +247,10 @@ class ResumeParserService:
             "extracted_soft_skills": sorted(list(extracted_soft_skills)),
             "experience_summary": experience_summary,
             "experience_years": experience_years,
+            "internship_experience": internship_experience,
+            "projects": projects,
+            "certifications": certifications,
+            "location": detected_location,
             "relevant_keywords": relevant_keywords,
             "parser_engine": "CareerConnect Rule-Based Keyword & Taxonomy Parser v1.0",
             "is_ai_generated": False, # Explicit transparency requirement

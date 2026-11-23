@@ -41,13 +41,23 @@ fun ResumeReviewScreen(
     var gradYearText by remember(extracted) { mutableStateOf(extracted?.graduationYear?.toString() ?: "") }
     var expYearsText by remember(extracted) { mutableStateOf(extracted?.experienceYears?.toString() ?: "0.0") }
     var expSummary by remember(extracted) { mutableStateOf(extracted?.experienceSummary ?: "") }
+    var internships by remember(extracted) { mutableStateOf(extracted?.internshipExperience ?: "") }
+    var projects by remember(extracted) { mutableStateOf(extracted?.projects ?: "") }
+    var certifications by remember(extracted) { mutableStateOf(extracted?.certifications ?: "") }
 
     val technicalSkills = remember(extracted) {
         mutableStateListOf<String>().apply {
             addAll(extracted?.extractedSkills ?: emptyList())
         }
     }
-    var newSkill by remember { mutableStateOf("") }
+    var newTechSkill by remember { mutableStateOf("") }
+
+    val softSkills = remember(extracted) {
+        mutableStateListOf<String>().apply {
+            addAll(extracted?.extractedSoftSkills ?: emptyList())
+        }
+    }
+    var newSoftSkill by remember { mutableStateOf("") }
 
     val uiState by resumeViewModel.uiState.collectAsState()
 
@@ -113,6 +123,26 @@ fun ResumeReviewScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Contact Info: Email & Phone
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email Address") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Phone Number") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // University
             OutlinedTextField(
                 value = university,
@@ -146,28 +176,29 @@ fun ResumeReviewScreen(
 
             // Technical Skills
             Text(
-                text = "Identified Skills (${technicalSkills.size})",
+                text = "Technical Skills (${technicalSkills.size})",
                 style = MaterialTheme.typography.titleMedium,
-                color = NavyPrimary
+                color = NavyPrimary,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
-                    value = newSkill,
-                    onValueChange = { newSkill = it },
-                    label = { Text("Add / Correct Skill") },
+                    value = newTechSkill,
+                    onValueChange = { newTechSkill = it },
+                    label = { Text("Add / Correct Technical Skill") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
-                    if (newSkill.isNotBlank() && !technicalSkills.contains(newSkill.trim())) {
-                        technicalSkills.add(newSkill.trim())
-                        newSkill = ""
+                    if (newTechSkill.isNotBlank() && !technicalSkills.contains(newTechSkill.trim())) {
+                        technicalSkills.add(newTechSkill.trim())
+                        newTechSkill = ""
                     }
                 }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add", tint = AccentBlue)
+                    Icon(Icons.Default.Add, contentDescription = "Add Skill", tint = AccentBlue)
                 }
             }
 
@@ -196,7 +227,60 @@ fun ResumeReviewScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Experience Summary
+            // Soft Skills
+            Text(
+                text = "Soft Skills (${softSkills.size})",
+                style = MaterialTheme.typography.titleMedium,
+                color = NavyPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = newSoftSkill,
+                    onValueChange = { newSoftSkill = it },
+                    label = { Text("Add Soft Skill") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = {
+                    if (newSoftSkill.isNotBlank() && !softSkills.contains(newSoftSkill.trim())) {
+                        softSkills.add(newSoftSkill.trim())
+                        newSoftSkill = ""
+                    }
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Soft Skill", tint = AccentBlue)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                softSkills.forEach { skill ->
+                    InputChip(
+                        selected = true,
+                        onClick = { softSkills.remove(skill) },
+                        label = { Text(skill) },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Remove",
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Work Experience
             OutlinedTextField(
                 value = expYearsText,
                 onValueChange = { expYearsText = it },
@@ -210,8 +294,44 @@ fun ResumeReviewScreen(
             OutlinedTextField(
                 value = expSummary,
                 onValueChange = { expSummary = it },
-                label = { Text("Experience Summary") },
+                label = { Text("Work Experience Summary") },
                 maxLines = 4,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Internships
+            OutlinedTextField(
+                value = internships,
+                onValueChange = { internships = it },
+                label = { Text("Internship Experience") },
+                maxLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Projects
+            OutlinedTextField(
+                value = projects,
+                onValueChange = { projects = it },
+                label = { Text("Projects (Title, Tech Stack & Summary)") },
+                maxLines = 4,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Certifications
+            OutlinedTextField(
+                value = certifications,
+                onValueChange = { certifications = it },
+                label = { Text("Certifications & Courses") },
+                maxLines = 3,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -223,12 +343,18 @@ fun ResumeReviewScreen(
                 onClick = {
                     val updateDto = UserProfileUpdateDto(
                         fullName = name.takeIf { it.isNotBlank() },
+                        email = email.takeIf { it.isNotBlank() },
+                        phoneNumber = phone.takeIf { it.isNotBlank() },
                         collegeUniversity = university.takeIf { it.isNotBlank() },
                         degree = degree.takeIf { it.isNotBlank() },
                         graduationYear = gradYearText.toIntOrNull(),
                         technicalSkills = technicalSkills.toList(),
+                        softSkills = softSkills.toList(),
                         experienceYears = expYearsText.toFloatOrNull() ?: 0f,
-                        workExperience = expSummary,
+                        workExperience = expSummary.takeIf { it.isNotBlank() },
+                        internshipExperience = internships.takeIf { it.isNotBlank() },
+                        projects = projects.takeIf { it.isNotBlank() },
+                        certifications = certifications.takeIf { it.isNotBlank() },
                         isConfirmedByUser = true
                     )
                     resumeViewModel.confirmExtractedDetails(updateDto) {
@@ -245,7 +371,7 @@ fun ResumeReviewScreen(
                 if (uiState is ResumeUiState.Uploading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Confirm & Save Verified Profile", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Confirm & Save Profile", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

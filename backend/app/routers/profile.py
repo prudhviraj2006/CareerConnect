@@ -68,6 +68,10 @@ def update_user_profile(
     profile.experience_years = req.experience_years
     if req.internship_experience is not None:
         profile.internship_experience = req.internship_experience
+    if req.projects is not None:
+        profile.projects = req.projects
+    if req.certifications is not None:
+        profile.certifications = req.certifications
 
     if req.preferred_job_role is not None:
         profile.preferred_job_role = req.preferred_job_role

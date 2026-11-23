@@ -68,6 +68,8 @@ class UserProfileUpdate(BaseModel):
     work_experience: Optional[str] = None
     experience_years: float = 0.0
     internship_experience: Optional[str] = None
+    projects: Optional[str] = None
+    certifications: Optional[str] = None
     preferred_job_role: Optional[str] = None
     preferred_location: Optional[str] = None
     expected_salary: Optional[str] = None
@@ -90,6 +92,8 @@ class UserProfileResponse(BaseModel):
     work_experience: Optional[str] = None
     experience_years: float = 0.0
     internship_experience: Optional[str] = None
+    projects: Optional[str] = None
+    certifications: Optional[str] = None
     preferred_job_role: Optional[str] = None
     preferred_location: Optional[str] = None
     expected_salary: Optional[str] = None
@@ -116,6 +120,10 @@ class ResumeExtractedData(BaseModel):
     extracted_soft_skills: List[str] = []
     experience_summary: Optional[str] = None
     experience_years: float = 0.0
+    internship_experience: Optional[str] = None
+    projects: Optional[str] = None
+    certifications: Optional[str] = None
+    location: Optional[str] = None
     relevant_keywords: List[str] = []
 
 class ResumeResponse(BaseModel):
