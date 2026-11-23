@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.careerconnect.app.data.models.UserProfileUpdateDto
 import com.careerconnect.app.data.utils.IndiaLocations
 import com.careerconnect.app.ui.components.CareerConnectTopBar
@@ -34,6 +35,9 @@ fun ProfileSetupScreen(
     onNavigateToResumeUpload: () -> Unit,
     onNavigateToHome: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
     var fullName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var currentCity by remember { mutableStateOf("Bengaluru") }
@@ -53,6 +57,10 @@ fun ProfileSetupScreen(
     var expYearsText by remember { mutableStateOf("0.0") }
     var workExp by remember { mutableStateOf("") }
     var internshipExp by remember { mutableStateOf("") }
+
+    // Projects & Certifications
+    var projects by remember { mutableStateOf("") }
+    var certifications by remember { mutableStateOf("") }
 
     // Preferences
     var preferredRole by remember { mutableStateOf("Software Engineer") }
@@ -84,7 +92,7 @@ fun ProfileSetupScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(20.dp)
         ) {
             Text(
@@ -361,7 +369,7 @@ fun ProfileSetupScreen(
                         }
                     }
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Skill", tint = AccentBlue)
+                    Icon(Icons.Default.Add, contentDescription = "Add Technical Skill", tint = AccentBlue)
                 }
             }
 
@@ -392,8 +400,88 @@ fun ProfileSetupScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 5. Job Preferences
-            Text("5. Job Preferences (India)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NavyPrimary)
+            // 5. Soft Skills
+            Text("5. Soft Skills (${softSkills.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NavyPrimary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = softSkillInput,
+                    onValueChange = { softSkillInput = it },
+                    label = { Text("Add Soft Skill", color = NavyPrimary) },
+                    placeholder = { Text("e.g. Communication, Problem Solving") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        if (softSkillInput.isNotBlank() && !softSkills.contains(softSkillInput.trim())) {
+                            softSkills.add(softSkillInput.trim())
+                            softSkillInput = ""
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Soft Skill", tint = AccentBlue)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                softSkills.forEach { skill ->
+                    InputChip(
+                        selected = true,
+                        onClick = { softSkills.remove(skill) },
+                        label = { Text(skill) },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Remove $skill",
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { softSkills.remove(skill) }
+                            )
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 6. Projects & Certifications
+            Text("6. Projects & Certifications", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NavyPrimary)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = projects,
+                onValueChange = { projects = it },
+                label = { Text("Key Academic / Personal Projects", color = NavyPrimary) },
+                placeholder = { Text("e.g. CareerConnect Android app using Compose & MVVM") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = certifications,
+                onValueChange = { certifications = it },
+                label = { Text("Certifications", color = NavyPrimary) },
+                placeholder = { Text("e.g. Google Associate Android Developer, AWS Certified") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 7. Job Preferences
+            Text("7. Job Preferences (India)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NavyPrimary)
             Spacer(modifier = Modifier.height(10.dp))
 
             OutlinedTextField(
@@ -435,15 +523,21 @@ fun ProfileSetupScreen(
                 onClick = {
                     val yearInt = gradYearText.toIntOrNull()
                     when {
-                        fullName.isBlank() -> validationError = "Please enter your full name."
+                        fullName.isBlank() -> {
+                            validationError = "Please enter your full name."
+                            coroutineScope.launch { scrollState.animateScrollTo(0) }
+                        }
                         phone.isNotBlank() && !IndiaLocations.isValidIndianPhone(phone) -> {
                             validationError = "Please enter a valid 10-digit Indian phone number (+91)."
+                            coroutineScope.launch { scrollState.animateScrollTo(0) }
                         }
-                        yearInt != null && (yearInt < 1970 || yearInt > 2035) -> {
+                        yearInt == null || yearInt < 1970 || yearInt > 2035 -> {
                             validationError = "Please enter a valid graduation year between 1970 and 2035."
+                            coroutineScope.launch { scrollState.animateScrollTo(0) }
                         }
                         technicalSkills.isEmpty() -> {
                             validationError = "Please add at least 1 technical skill for job matching."
+                            coroutineScope.launch { scrollState.animateScrollTo(0) }
                         }
                         else -> {
                             validationError = null
@@ -461,6 +555,8 @@ fun ProfileSetupScreen(
                                 workExperience = workExp.takeIf { it.isNotBlank() },
                                 experienceYears = if (isFresher) 0f else (expYearsText.toFloatOrNull() ?: 0f),
                                 internshipExperience = internshipExp.takeIf { it.isNotBlank() },
+                                projects = projects.trim().takeIf { it.isNotBlank() },
+                                certifications = certifications.trim().takeIf { it.isNotBlank() },
                                 preferredJobRole = preferredRole.trim().takeIf { it.isNotBlank() },
                                 preferredLocation = "$currentCity, $currentState",
                                 expectedSalary = expectedSalary.trim().takeIf { it.isNotBlank() },
