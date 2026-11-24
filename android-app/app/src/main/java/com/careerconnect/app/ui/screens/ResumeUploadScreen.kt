@@ -234,16 +234,21 @@ fun ResumeUploadScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NavyPrimary,
+                    contentColor = Color.White,
+                    disabledContainerColor = NavyPrimary.copy(alpha = 0.5f),
+                    disabledContentColor = Color.White.copy(alpha = 0.7f)
+                )
             ) {
                 if (uiState is ResumeUiState.Uploading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Extracting Resume Text...")
+                    Text("Uploading & Extracting...", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 } else {
-                    Icon(Icons.Default.UploadFile, contentDescription = null)
+                    Icon(Icons.Default.UploadFile, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Upload & Analyze Resume", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Upload & Extract Resume", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
