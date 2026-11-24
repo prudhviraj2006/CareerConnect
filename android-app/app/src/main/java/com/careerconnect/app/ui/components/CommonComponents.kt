@@ -343,9 +343,20 @@ fun EmptyStateView(
             Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = onActionClick,
-                colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NavyPrimary,
+                    contentColor = Color.White,
+                    disabledContainerColor = NavyPrimary.copy(alpha = 0.5f),
+                    disabledContentColor = Color.White.copy(alpha = 0.7f)
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Text(text = actionButtonText)
+                Text(
+                    text = actionButtonText,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
             }
         }
     }
@@ -401,9 +412,15 @@ fun ErrorView(errorMessage: String, onRetry: () -> Unit) {
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = NavyPrimary,
+                contentColor = Color.White,
+                disabledContainerColor = NavyPrimary.copy(alpha = 0.5f),
+                disabledContentColor = Color.White.copy(alpha = 0.7f)
+            ),
+            shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Retry")
+            Text("Retry", color = Color.White, fontWeight = FontWeight.Bold)
         }
     }
 }

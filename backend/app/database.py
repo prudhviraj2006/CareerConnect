@@ -54,6 +54,8 @@ def run_schema_migrations(eng):
                 "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS employment_type_preference VARCHAR(100);",
                 "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS is_confirmed_by_user BOOLEAN DEFAULT FALSE;",
                 # jobs table
+                "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_india BOOLEAN DEFAULT FALSE;",
+                "CREATE INDEX IF NOT EXISTS ix_jobs_is_india ON jobs (is_india);",
                 "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_india_relevant BOOLEAN DEFAULT TRUE;",
                 "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_internship BOOLEAN DEFAULT FALSE;",
                 "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_fresher_friendly BOOLEAN DEFAULT FALSE;",
@@ -92,6 +94,7 @@ def run_schema_migrations(eng):
                     ("is_confirmed_by_user", "BOOLEAN DEFAULT 0")
                 ],
                 "jobs": [
+                    ("is_india", "BOOLEAN DEFAULT 0"),
                     ("is_india_relevant", "BOOLEAN DEFAULT 1"),
                     ("is_internship", "BOOLEAN DEFAULT 0"),
                     ("is_fresher_friendly", "BOOLEAN DEFAULT 0"),

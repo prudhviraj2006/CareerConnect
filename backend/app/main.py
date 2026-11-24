@@ -42,16 +42,20 @@ async def lifespan(app: FastAPI):
     logger.info("Schema migrations verified successfully.")
 
     # Background initial job sync check
-    db = SessionLocal()
-    try:
-        job_count = db.query(all_models.Job).count()
-        if job_count == 0:
-            logger.info("No jobs found in database. Initiating first genuine job synchronization...")
-            asyncio.create_task(JobSyncService.synchronize_jobs(db, limit_per_provider=20))
-    except Exception as e:
-        logger.warning(f"Could not perform startup job sync check: {e}")
-    finally:
-        db.close()
+    async def initial_job_sync_task():
+        await asyncio.sleep(2)
+        sync_db = SessionLocal()
+        try:
+            job_count = sync_db.query(all_models.Job).count()
+            if job_count == 0:
+                logger.info("No jobs found in database. Initiating first genuine job synchronization...")
+                await JobSyncService.synchronize_jobs(sync_db, limit_per_provider=25)
+        except Exception as e:
+            logger.warning(f"Could not perform startup job sync check: {e}")
+        finally:
+            sync_db.close()
+
+    asyncio.create_task(initial_job_sync_task())
 
     yield
 

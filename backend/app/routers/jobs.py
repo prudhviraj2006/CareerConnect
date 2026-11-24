@@ -1,7 +1,10 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, desc, asc
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 from backend.app.database import get_db
 from backend.app.models.all_models import Job, JobRequiredSkill, JobSource, JobMatch, User
@@ -66,29 +69,42 @@ def get_jobs(
     india_only: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Job).filter(Job.is_active == True)
+    try:
+        query = db.query(Job).filter(Job.is_active == True)
 
-    if location:
-        query = query.filter(Job.location.ilike(f"%{location}%"))
-    if experience_level:
-        query = query.filter(Job.experience_level.ilike(f"%{experience_level}%"))
-    if employment_type:
-        query = query.filter(Job.employment_type.ilike(f"%{employment_type}%"))
-    if is_remote is not None:
-        query = query.filter(Job.is_remote == is_remote)
-    if india_only is True:
-        query = query.filter(Job.is_india == True)
+        if location:
+            query = query.filter(Job.location.ilike(f"%{location}%"))
+        if experience_level:
+            query = query.filter(Job.experience_level.ilike(f"%{experience_level}%"))
+        if employment_type:
+            query = query.filter(Job.employment_type.ilike(f"%{employment_type}%"))
+        if is_remote is not None:
+            query = query.filter(Job.is_remote == is_remote)
+        if india_only is True:
+            query = query.filter(Job.is_india == True)
 
-    # India-first prioritization: Indian / India-eligible jobs appear first
-    if sort_by == "date":
-        query = query.order_by(Job.is_india.desc(), Job.publication_date.desc(), Job.id.desc())
-    else:
-        query = query.order_by(Job.is_india.desc(), Job.id.desc())
+        # India-first prioritization: Indian / India-eligible jobs appear first
+        if sort_by == "date":
+            query = query.order_by(Job.is_india.desc(), Job.publication_date.desc(), Job.id.desc())
+        else:
+            query = query.order_by(Job.is_india.desc(), Job.id.desc())
 
-    offset = (page - 1) * limit
-    jobs = query.offset(offset).limit(limit).all()
+        offset = (page - 1) * limit
+        jobs = query.offset(offset).limit(limit).all()
 
-    return [JobResponse(**serialize_job(j)) for j in jobs]
+        return [JobResponse(**serialize_job(j)) for j in jobs]
+    except Exception as e:
+        logger.exception(f"Error fetching jobs: {e}")
+        # If is_india column was somehow not present in query, fallback to ordering by id
+        try:
+            query = db.query(Job).filter(Job.is_active == True)
+            jobs = query.order_by(Job.id.desc()).offset((page - 1) * limit).limit(limit).all()
+            return [JobResponse(**serialize_job(j)) for j in jobs]
+        except Exception as inner_e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch jobs: {str(e)}"
+            )
 
 @router.get("/search", response_model=List[JobResponse])
 def search_jobs(
