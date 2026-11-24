@@ -116,30 +116,37 @@ def login(req: UserLoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/google", response_model=TokenResponse)
 def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
-    verified_email = req.email.lower().strip()
-    verified_name = req.full_name
+    if not req.id_token or not req.id_token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A verified Google ID token is required for Google Sign-In."
+        )
 
-    if req.id_token:
-        try:
-            from google.oauth2 import id_token
-            from google.auth.transport import requests
-            idinfo = id_token.verify_oauth2_token(req.id_token, requests.Request())
-            if idinfo.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid Google token issuer."
-                )
-            token_email = idinfo.get("email")
-            if token_email:
-                verified_email = token_email.lower().strip()
-            verified_name = idinfo.get("name") or verified_name
-        except Exception as e:
-            logger.warning(f"Google ID token cryptographic verification check: {e}")
-            if "expired" in str(e).lower() or "invalid" in str(e).lower() or "signature" in str(e).lower():
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=f"Google authentication failed: {str(e)}"
-                )
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests
+        idinfo = id_token.verify_oauth2_token(req.id_token, requests.Request())
+        if idinfo.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Google token issuer."
+            )
+        token_email = idinfo.get("email")
+        if not token_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Google token did not contain a valid email address."
+            )
+        verified_email = token_email.lower().strip()
+        verified_name = idinfo.get("name") or req.full_name or verified_email.split("@")[0].title()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Google ID token cryptographic verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Google authentication failed: {str(e)}"
+        )
 
     email_clean = verified_email
     user = db.query(User).filter(User.email == email_clean).first()
