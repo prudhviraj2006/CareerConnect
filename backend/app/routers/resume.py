@@ -139,6 +139,9 @@ def confirm_extracted_resume_data(
     if reviewed_profile.full_name:
         profile.full_name = reviewed_profile.full_name
         current_user.full_name = reviewed_profile.full_name
+    if reviewed_profile.phone_number:
+        profile.phone_number = reviewed_profile.phone_number
+        current_user.phone_number = reviewed_profile.phone_number
     if reviewed_profile.education_level:
         profile.education_level = reviewed_profile.education_level
     if reviewed_profile.college_university:
@@ -154,6 +157,12 @@ def confirm_extracted_resume_data(
     profile.soft_skills = reviewed_profile.soft_skills
     profile.work_experience = reviewed_profile.work_experience
     profile.experience_years = reviewed_profile.experience_years
+    if reviewed_profile.internship_experience is not None:
+        profile.internship_experience = reviewed_profile.internship_experience
+    if reviewed_profile.projects is not None:
+        profile.projects = reviewed_profile.projects
+    if reviewed_profile.certifications is not None:
+        profile.certifications = reviewed_profile.certifications
     profile.is_confirmed_by_user = True
 
     db.commit()

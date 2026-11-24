@@ -107,10 +107,11 @@ class ResumeRepository(private val apiService: ApiService) {
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                createLocalProfileConfirm(profile)
+                val errorMsg = response.errorBody()?.string() ?: "Failed to save profile."
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            createLocalProfileConfirm(profile)
+            Result.failure(e)
         }
     }
 
