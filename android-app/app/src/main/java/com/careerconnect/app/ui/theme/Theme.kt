@@ -27,7 +27,7 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF64B5F6),
-    onPrimary = NavyPrimary,
+    onPrimary = Color.White,
     primaryContainer = NavySecondary,
     onPrimaryContainer = Color.White,
     secondary = AccentCyan,

@@ -126,7 +126,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = if (profile?.isConfirmedByUser == true)
-                                "Your verified skills: ${profile?.technicalSkills?.size ?: 0} technical skills active"
+                                "${profile?.technicalSkills?.size ?: 0} skills active in your profile (User-Confirmed)"
                             else
                                 "Upload your resume or set up profile to activate real skill-matching",
                             color = Color(0xFFCBD5E1),
