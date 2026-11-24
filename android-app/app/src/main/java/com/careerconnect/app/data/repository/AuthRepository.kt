@@ -3,11 +3,16 @@ package com.careerconnect.app.data.repository
 import com.careerconnect.app.data.api.ApiService
 import com.careerconnect.app.data.models.*
 import com.careerconnect.app.data.preferences.UserPreferencesDataStore
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.userProfileChangeRequest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 
 class AuthRepository(
     private val apiService: ApiService,
-    private val preferencesDataStore: UserPreferencesDataStore
+    private val preferencesDataStore: UserPreferencesDataStore,
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     val accessTokenFlow: Flow<String?> = preferencesDataStore.accessTokenFlow
     val isOnboardingCompletedFlow: Flow<Boolean> = preferencesDataStore.isOnboardingCompletedFlow
@@ -35,7 +40,35 @@ class AuthRepository(
 
     suspend fun register(req: RegisterRequest): Result<TokenResponse> {
         return try {
-            val response = apiService.register(req)
+            var firebaseToken: String? = null
+            try {
+                val authResult = firebaseAuth.createUserWithEmailAndPassword(req.email.trim(), req.password).await()
+                val fbUser = authResult.user
+                try {
+                    fbUser?.updateProfile(userProfileChangeRequest { displayName = req.fullName })?.await()
+                } catch (_: Exception) {}
+                try {
+                    fbUser?.sendEmailVerification()?.await()
+                } catch (_: Exception) {}
+                val tokenResult = fbUser?.getIdToken(true)?.await()
+                firebaseToken = tokenResult?.token
+            } catch (e: Exception) {
+                // If user exists or Firebase offline, fallback to backend registration
+            }
+
+            val response = if (!firebaseToken.isNullOrBlank()) {
+                apiService.authenticateWithFirebase(
+                    FirebaseAuthRequest(
+                        firebaseToken = firebaseToken,
+                        email = req.email.trim(),
+                        fullName = req.fullName,
+                        phoneNumber = req.phoneNumber
+                    )
+                )
+            } else {
+                apiService.register(req)
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 val token = response.body()!!
                 preferencesDataStore.saveAuthTokens(
@@ -58,7 +91,27 @@ class AuthRepository(
 
     suspend fun login(req: LoginRequest): Result<TokenResponse> {
         return try {
-            val response = apiService.login(req)
+            var firebaseToken: String? = null
+            try {
+                val authResult = firebaseAuth.signInWithEmailAndPassword(req.email.trim(), req.password).await()
+                val fbUser = authResult.user
+                val tokenResult = fbUser?.getIdToken(true)?.await()
+                firebaseToken = tokenResult?.token
+            } catch (e: Exception) {
+                // If not registered in Firebase yet, will fall back to backend DB credentials
+            }
+
+            val response = if (!firebaseToken.isNullOrBlank()) {
+                apiService.authenticateWithFirebase(
+                    FirebaseAuthRequest(
+                        firebaseToken = firebaseToken,
+                        email = req.email.trim()
+                    )
+                )
+            } else {
+                apiService.login(req)
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 val token = response.body()!!
                 preferencesDataStore.saveAuthTokens(
@@ -81,11 +134,14 @@ class AuthRepository(
 
     suspend fun forgotPassword(email: String): Result<String> {
         return try {
-            val response = apiService.forgotPassword(ForgotPasswordRequest(email))
+            try {
+                firebaseAuth.sendPasswordResetEmail(email.trim()).await()
+            } catch (_: Exception) {}
+            val response = apiService.forgotPassword(ForgotPasswordRequest(email.trim()))
             if (response.isSuccessful) {
-                Result.success("Password reset instructions generated.")
+                Result.success("Password reset instructions sent.")
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Failed request."))
+                Result.success("If an account exists for this email, password reset instructions have been sent.")
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -105,11 +161,51 @@ class AuthRepository(
         }
     }
 
+    suspend fun sendEmailVerification(): Result<String> {
+        return try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                user.sendEmailVerification().await()
+                Result.success("Verification email sent to ${user.email}.")
+            } else {
+                Result.failure(Exception("No authenticated user found."))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun loginWithGoogle(email: String, fullName: String? = null, idToken: String? = null): Result<TokenResponse> {
         return try {
-            val response = apiService.loginWithGoogle(
-                GoogleLoginRequest(email = email, fullName = fullName, idToken = idToken)
-            )
+            var firebaseToken = idToken
+            if (!idToken.isNullOrBlank()) {
+                try {
+                    val credential = GoogleAuthProvider.getCredential(idToken, null)
+                    val authResult = firebaseAuth.signInWithCredential(credential).await()
+                    val fbUser = authResult.user
+                    val tokenResult = fbUser?.getIdToken(true)?.await()
+                    if (!tokenResult?.token.isNullOrBlank()) {
+                        firebaseToken = tokenResult?.token
+                    }
+                } catch (e: Exception) {
+                    // Fall back to direct ID token
+                }
+            }
+
+            val response = if (!firebaseToken.isNullOrBlank()) {
+                apiService.authenticateWithFirebase(
+                    FirebaseAuthRequest(
+                        firebaseToken = firebaseToken,
+                        email = email,
+                        fullName = fullName
+                    )
+                )
+            } else {
+                apiService.loginWithGoogle(
+                    GoogleLoginRequest(email = email, fullName = fullName, idToken = idToken)
+                )
+            }
+
             if (response.isSuccessful && response.body() != null) {
                 val token = response.body()!!
                 preferencesDataStore.saveAuthTokens(
@@ -136,6 +232,9 @@ class AuthRepository(
     }
 
     suspend fun logout() {
+        try {
+            firebaseAuth.signOut()
+        } catch (_: Exception) {}
         preferencesDataStore.clearAuth()
     }
 }

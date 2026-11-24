@@ -89,6 +89,18 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun sendEmailVerification() {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            val result = authRepository.sendEmailVerification()
+            result.onSuccess {
+                _uiState.value = AuthUiState.Message(it)
+            }.onFailure {
+                _uiState.value = AuthUiState.Error(it.message ?: "Failed to send verification email.")
+            }
+        }
+    }
+
     fun completeOnboarding() {
         viewModelScope.launch {
             authRepository.setOnboardingCompleted()

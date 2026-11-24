@@ -21,6 +21,13 @@ data class GoogleLoginRequest(
     @SerializedName("photo_url") val photoUrl: String? = null
 )
 
+data class FirebaseAuthRequest(
+    @SerializedName("firebase_token") val firebaseToken: String,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("full_name") val fullName: String? = null,
+    @SerializedName("phone_number") val phoneNumber: String? = null
+)
+
 data class TokenResponse(
     @SerializedName("access_token") val accessToken: String,
     @SerializedName("token_type") val tokenType: String,

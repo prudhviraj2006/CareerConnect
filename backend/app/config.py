@@ -33,8 +33,10 @@ class Settings(BaseSettings):
     ADZUNA_APP_KEY: str = os.getenv("ADZUNA_APP_KEY", "")
     ADZUNA_COUNTRY: str = os.getenv("ADZUNA_COUNTRY", "in")
 
-    # Push Notification Service
+    # Push Notification & Firebase Service
     FCM_SERVER_KEY: str = ""
+    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "careerconnect-4974b")
+    FIREBASE_CREDENTIALS_PATH: str = os.getenv("FIREBASE_CREDENTIALS_PATH", "")
 
     class Config:
         env_file = ".env"

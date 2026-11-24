@@ -41,6 +41,9 @@ def run_schema_migrations(eng):
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128);",
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_firebase_uid ON users (firebase_uid);",
+                "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL;",
                 # user_profiles table
                 "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS technical_skills JSONB DEFAULT '[]'::jsonb;",
                 "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS soft_skills JSONB DEFAULT '[]'::jsonb;",
@@ -78,7 +81,8 @@ def run_schema_migrations(eng):
                     ("phone_number", "TEXT"),
                     ("is_verified", "BOOLEAN DEFAULT 0"),
                     ("reset_token", "TEXT"),
-                    ("reset_token_expires", "DATETIME")
+                    ("reset_token_expires", "DATETIME"),
+                    ("firebase_uid", "TEXT")
                 ],
                 "user_profiles": [
                     ("technical_skills", "TEXT DEFAULT '[]'"),

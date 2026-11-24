@@ -11,6 +11,7 @@ from backend.app.schemas.schemas import (
     UserRegisterRequest,
     UserLoginRequest,
     GoogleLoginRequest,
+    FirebaseAuthRequest,
     TokenResponse,
     RefreshTokenRequest,
     ForgotPasswordRequest,
@@ -167,6 +168,125 @@ def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
             user_id=user.id,
             full_name=user.full_name,
             email=user.email,
+            is_confirmed_by_user=True
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(user)
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your account has been deactivated."
+        )
+
+    access_token = create_access_token({"sub": str(user.id), "email": user.email})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user)
+    )
+
+def verify_firebase_id_token(token: str) -> dict:
+    """
+    Verify Firebase ID token using firebase_admin SDK or google.oauth2.id_token.
+    """
+    # 1. Try Firebase Admin SDK
+    try:
+        import firebase_admin
+        from firebase_admin import auth as fb_auth
+        import os
+        try:
+            firebase_admin.get_app()
+        except ValueError:
+            cred = None
+            if settings.FIREBASE_CREDENTIALS_PATH and os.path.exists(settings.FIREBASE_CREDENTIALS_PATH):
+                from firebase_admin import credentials
+                cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+            options = {"projectId": settings.FIREBASE_PROJECT_ID} if settings.FIREBASE_PROJECT_ID else None
+            firebase_admin.initialize_app(cred, options=options)
+        return fb_auth.verify_id_token(token)
+    except Exception as fb_err:
+        logger.debug(f"firebase_admin verification attempt: {fb_err}")
+
+    # 2. Fallback to Google OAuth verify_firebase_token
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests
+        return id_token.verify_firebase_token(
+            token,
+            requests.Request(),
+            audience=settings.FIREBASE_PROJECT_ID
+        )
+    except Exception as g_err:
+        logger.warning(f"Google verify_firebase_token failed: {g_err}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Firebase authentication token invalid or expired: {str(g_err)}"
+        )
+
+@router.post("/firebase", response_model=TokenResponse)
+def firebase_login(req: FirebaseAuthRequest, db: Session = Depends(get_db)):
+    if not req.firebase_token or not req.firebase_token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A verified Firebase ID token is required."
+        )
+
+    decoded = verify_firebase_id_token(req.firebase_token.strip())
+    uid = decoded.get("uid") or decoded.get("user_id") or decoded.get("sub")
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Firebase token missing user ID."
+        )
+
+    token_email = decoded.get("email") or req.email
+    if not token_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Firebase account does not have an associated email address."
+        )
+
+    verified_email = str(token_email).lower().strip()
+    verified_name = decoded.get("name") or req.full_name or verified_email.split("@")[0].title()
+    phone = decoded.get("phone_number") or req.phone_number
+
+    # First lookup by firebase_uid
+    user = db.query(User).filter(User.firebase_uid == uid).first()
+    if not user:
+        # Check by email for existing accounts
+        user = db.query(User).filter(User.email == verified_email).first()
+        if user:
+            # Link existing user with firebase_uid
+            user.firebase_uid = uid
+            if phone and not user.phone_number:
+                user.phone_number = phone
+            db.commit()
+            db.refresh(user)
+
+    if not user:
+        # Register new Firebase authenticated user
+        user = User(
+            email=verified_email,
+            hashed_password=None,
+            firebase_uid=uid,
+            full_name=verified_name.strip() if verified_name else verified_email.split("@")[0].title(),
+            phone_number=phone,
+            is_active=True,
+            is_verified=bool(decoded.get("email_verified", True))
+        )
+        db.add(user)
+        db.flush()
+
+        profile = UserProfile(
+            user_id=user.id,
+            full_name=user.full_name,
+            email=user.email,
+            phone_number=phone,
             is_confirmed_by_user=True
         )
         db.add(profile)

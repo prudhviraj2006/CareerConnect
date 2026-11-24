@@ -19,6 +19,12 @@ class GoogleLoginRequest(BaseModel):
     id_token: Optional[str] = None
     photo_url: Optional[str] = None
 
+class FirebaseAuthRequest(BaseModel):
+    firebase_token: str
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

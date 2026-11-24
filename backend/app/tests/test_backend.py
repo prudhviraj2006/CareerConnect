@@ -194,3 +194,25 @@ def test_saved_jobs_and_applications(client):
         # Check notifications
         notifs = client.get("/api/notifications", headers=headers).json()
         assert len(notifs) >= 1
+
+def test_firebase_auth_endpoint(client, monkeypatch):
+    from backend.app.routers import auth
+    # Mock verify_firebase_id_token
+    monkeypatch.setattr(auth, "verify_firebase_id_token", lambda token: {
+        "uid": "fb_uid_123456789",
+        "email": "firebaseuser@careerconnect.org",
+        "name": "Firebase User",
+        "email_verified": True
+    })
+
+    # Call /api/auth/firebase
+    response = client.post("/api/auth/firebase", json={
+        "firebase_token": "valid_mocked_token",
+        "email": "firebaseuser@careerconnect.org",
+        "full_name": "Firebase User"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["user"]["email"] == "firebaseuser@careerconnect.org"
+    assert data["user"]["full_name"] == "Firebase User"
